@@ -19420,7 +19420,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_AI_SERVICE_BACKEND,
-   "Select the translation backend. HTTP uses the existing image translation API. OpenAI connects directly to an OpenAI-compatible /v1 API such as local CLIProxy or OpenRouter. Apple uses on-device OCR and translation (macOS/iOS)."
+   "Select the translation backend. HTTP uses the existing image translation API. OpenAI Vision sends the game frame to a remote vision model. Apple OCR + OpenAI reads text with Apple Vision, then sends only text and game context to the selected remote model. Apple On-Device uses local OCR and translation (macOS/iOS)."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_AI_SERVICE_URL,
@@ -19440,7 +19440,19 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_AI_SERVICE_MODEL,
-   "Select a translation model, or enter a model identifier directly."
+   "Select a remote translation model, or enter a model identifier directly. Apple OCR + OpenAI can use fast text-only models."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_AI_SERVICE_REASONING_EFFORT,
+   "ai_service_reasoning_effort"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AI_SERVICE_REASONING_EFFORT,
+   "Reasoning Effort"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_AI_SERVICE_REASONING_EFFORT,
+   "Choose how much reasoning the selected remote model uses. 'default' omits the parameter; 'low' is recommended for fast game translation."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_AI_SERVICE_API_KEY,
@@ -35694,6 +35706,14 @@ MSG_HASH(
 MSG_HASH(
    MSG_ACCESSIBILITY_STARTUP,
    "RetroArch accessibility on.  Main Menu Load Core."
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_DISABLED,
+   "AI Service is disabled. Enable it before starting game translation."
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_NO_CONTENT,
+   "No game is running. Load content before starting game translation."
    )
 MSG_HASH(
    MSG_AI_SERVICE_STOPPED,

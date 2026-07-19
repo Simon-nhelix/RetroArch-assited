@@ -21,6 +21,10 @@
 #include "../gfx_animation.h"
 #include "../gfx_display.h"
 
+#ifdef HAVE_TRANSLATE
+#include "../../translation_defines.h"
+#endif
+
 #define GENERIC_MESSAGE_FADE_DURATION MSG_QUEUE_ANIMATION_DURATION
 
 #ifdef HAVE_TRANSLATE
@@ -86,6 +90,7 @@ struct gfx_widget_ai_service_message_state
    unsigned text_color;
    unsigned line_count;
    unsigned message_duration;
+   unsigned target_language;
 
    float timer;
    float bg_x;
@@ -234,6 +239,7 @@ static void gfx_widget_ai_service_message_reset(bool cancel_pending)
       state->wrapped[0]      = '\0';
       state->message_len     = 0;
       state->wrapped_len     = 0;
+      state->target_language = TRANSLATION_LANG_DONT_CARE;
    }
 }
 
@@ -241,6 +247,19 @@ static void gfx_widget_ai_service_message_expired_cb(void *userdata)
 {
    (void)userdata;
    p_w_ai_service_message_st.visible = false;
+}
+
+static gfx_widget_font_data_t *gfx_widget_ai_service_message_font(
+      dispgfx_widget_t *p_dispwidget)
+{
+   gfx_widget_ai_service_message_state_t *state =
+         &p_w_ai_service_message_st;
+
+   if (   state->target_language == TRANSLATION_LANG_KO
+       && p_dispwidget->gfx_widget_fonts.ai_service_korean.font)
+      return &p_dispwidget->gfx_widget_fonts.ai_service_korean;
+
+   return &p_dispwidget->gfx_widget_fonts.msg_queue;
 }
 
 static size_t gfx_widget_ai_service_utf8_sequence_len(
@@ -387,7 +406,7 @@ static void gfx_widget_ai_service_message_update_layout(
    gfx_widget_ai_service_message_state_t *state =
          &p_w_ai_service_message_st;
    gfx_widget_font_data_t *font_msg_queue =
-         &p_dispwidget->gfx_widget_fonts.msg_queue;
+         gfx_widget_ai_service_message_font(p_dispwidget);
    unsigned video_width  = p_dispwidget->last_video_width;
    unsigned video_height = p_dispwidget->last_video_height;
    unsigned max_bg_width;
@@ -592,7 +611,8 @@ void gfx_widget_set_generic_message(
 
 #ifdef HAVE_TRANSLATE
 void gfx_widget_set_ai_service_message(
-      const char *msg, unsigned duration)
+      const char *msg, unsigned duration,
+      unsigned target_language)
 {
    gfx_widget_ai_service_message_state_t *state =
          &p_w_ai_service_message_st;
@@ -609,6 +629,7 @@ void gfx_widget_set_ai_service_message(
          state->message, state->message_len);
 
    state->message_duration = duration;
+   state->target_language  = target_language;
    state->message_updated  = true;
 }
 
@@ -730,10 +751,16 @@ static void gfx_widget_generic_message_iterate(void *user_data,
       gfx_animation_kill_by_tag(&timer_tag);
       gfx_widget_ai_service_message_update_layout(p_dispwidget);
 
-      timer.duration = ai_state->message_duration;
-      timer.cb       = gfx_widget_ai_service_message_expired_cb;
-      timer.userdata = ai_state;
-      gfx_animation_timer_start(&ai_state->timer, &timer);
+      /* duration == 0 is an explicit persistent subtitle. It remains visible
+       * until the next translation replaces it or a lifecycle/stop path calls
+       * gfx_widget_clear_ai_service_message(). */
+      if (ai_state->message_duration > 0)
+      {
+         timer.duration = ai_state->message_duration;
+         timer.cb       = gfx_widget_ai_service_message_expired_cb;
+         timer.userdata = ai_state;
+         gfx_animation_timer_start(&ai_state->timer, &timer);
+      }
 
       ai_state->visible         = true;
       ai_state->message_updated = false;
@@ -849,7 +876,7 @@ static void gfx_widget_ai_service_message_frame(
    userdata       = video_info->userdata;
    p_disp         = (gfx_display_t*)video_info->disp_userdata;
    dispctx        = p_disp ? p_disp->dispctx : NULL;
-   font_msg_queue = &p_dispwidget->gfx_widget_fonts.msg_queue;
+   font_msg_queue = gfx_widget_ai_service_message_font(p_dispwidget);
    text_color     = COLOR_TEXT_ALPHA(state->text_color, 255);
 
    gfx_display_set_alpha(p_w_generic_message_st.bg_color, 0.88f);
@@ -896,6 +923,9 @@ static void gfx_widget_ai_service_message_frame(
    /* Flush glyphs batched by widgets drawn earlier in the frame before
     * enabling this overlay's clip rectangle. Otherwise unrelated text (for
     * example leaderboard widgets) would be clipped to the translation box. */
+   if (font_msg_queue != &p_dispwidget->gfx_widget_fonts.msg_queue)
+      gfx_widgets_flush_text(video_width, video_height,
+            &p_dispwidget->gfx_widget_fonts.msg_queue);
    gfx_widgets_flush_text(video_width, video_height, font_msg_queue);
    gfx_display_scissor_begin(
          p_disp, userdata, video_width, video_height,

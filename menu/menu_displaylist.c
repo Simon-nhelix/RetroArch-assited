@@ -8617,7 +8617,6 @@ unsigned menu_displaylist_build_list(
             static menu_displaylist_build_info_selective_t build_list[] = {
                {MENU_ENUM_LABEL_ACCESSIBILITY_ENABLED,               PARSE_ONLY_BOOL, true },
                {MENU_ENUM_LABEL_ACCESSIBILITY_NARRATOR_SPEECH_SPEED, PARSE_ONLY_UINT, false },
-               {MENU_ENUM_LABEL_AI_SERVICE_SETTINGS,                 PARSE_ACTION,    true },
             };
 
             for (i = 0; i < ARRAY_SIZE(build_list); i++)
@@ -8647,23 +8646,28 @@ unsigned menu_displaylist_build_list(
       case DISPLAYLIST_AI_SERVICE_SETTINGS_LIST:
          {
             bool ai_service_enable         = settings->bools.ai_service_enable;
-            bool ai_service_openai         = string_is_equal(
-                  settings->arrays.ai_service_backend, "openai");
+            bool ai_service_uses_openai    =
+                     string_is_equal(settings->arrays.ai_service_backend,
+                           "openai")
+                  || string_is_equal(settings->arrays.ai_service_backend,
+                           "apple_ocr_openai");
 
             static menu_displaylist_build_info_selective_t build_list[] = {
                {MENU_ENUM_LABEL_AI_SERVICE_ENABLE,        PARSE_ONLY_BOOL,   true},
-               {MENU_ENUM_LABEL_AI_SERVICE_MODE,          PARSE_ONLY_UINT,   false},
+               {MENU_ENUM_LABEL_AI_SERVICE_TOGGLE,        PARSE_ACTION,      true},
                {MENU_ENUM_LABEL_AI_SERVICE_BACKEND,       PARSE_ONLY_STRING_OPTIONS, false},
                {MENU_ENUM_LABEL_AI_SERVICE_URL,           PARSE_ONLY_STRING, false},
                {MENU_ENUM_LABEL_AI_SERVICE_MODEL,         PARSE_ONLY_STRING_OPTIONS, false},
+               {MENU_ENUM_LABEL_AI_SERVICE_REASONING_EFFORT, PARSE_ONLY_STRING_OPTIONS, false},
                {MENU_ENUM_LABEL_AI_SERVICE_API_KEY,       PARSE_ONLY_STRING, false},
                {MENU_ENUM_LABEL_AI_SERVICE_TARGET_LANG,   PARSE_ONLY_UINT,   false},
                {MENU_ENUM_LABEL_AI_SERVICE_SOURCE_LANG,   PARSE_ONLY_UINT,   false},
+               {MENU_ENUM_LABEL_AI_SERVICE_MODE,          PARSE_ONLY_UINT,   false},
                {MENU_ENUM_LABEL_AI_SERVICE_PAUSE,         PARSE_ONLY_BOOL,   false},
             };
 
 #ifdef HAVE_TRANSLATE
-            if (ai_service_enable && ai_service_openai)
+            if (ai_service_enable && ai_service_uses_openai)
                ai_service_refresh_models();
 #endif
 
@@ -8672,9 +8676,10 @@ unsigned menu_displaylist_build_list(
                switch (build_list[i].enum_idx)
                {
                   case MENU_ENUM_LABEL_AI_SERVICE_MODEL:
+                  case MENU_ENUM_LABEL_AI_SERVICE_REASONING_EFFORT:
                   case MENU_ENUM_LABEL_AI_SERVICE_API_KEY:
                      build_list[i].checked =
-                           ai_service_enable && ai_service_openai;
+                           ai_service_enable && ai_service_uses_openai;
                      break;
                   case MENU_ENUM_LABEL_AI_SERVICE_MODE:
                   case MENU_ENUM_LABEL_AI_SERVICE_BACKEND:
@@ -11549,6 +11554,9 @@ unsigned menu_displaylist_build_list(
 #endif
             static menu_displaylist_build_info_selective_t build_list[] = {
                {MENU_ENUM_LABEL_USER_INTERFACE_SETTINGS,     PARSE_ACTION, true},
+#ifdef HAVE_TRANSLATE
+               {MENU_ENUM_LABEL_AI_SERVICE_SETTINGS,         PARSE_ACTION, true},
+#endif
                {MENU_ENUM_LABEL_VIDEO_SETTINGS,              PARSE_ACTION, true},
                {MENU_ENUM_LABEL_AUDIO_SETTINGS,              PARSE_ACTION, true},
                {MENU_ENUM_LABEL_INPUT_SETTINGS,              PARSE_ACTION, true},

@@ -156,6 +156,11 @@ typedef struct
    gfx_widget_font_data_t regular;
    gfx_widget_font_data_t bold;
    gfx_widget_font_data_t msg_queue;
+#ifdef HAVE_TRANSLATE
+   /* Kept separate from msg_queue so translated Korean text never changes
+    * the font used by ordinary notifications. */
+   gfx_widget_font_data_t ai_service_korean;
+#endif
 } gfx_widget_fonts_t;
 
 typedef struct disp_widget_msg
@@ -411,8 +416,11 @@ bool gfx_widgets_ai_service_overlay_load(
       enum image_type_enum image_type);
 
 void gfx_widgets_ai_service_overlay_unload(void);
+/* A duration of zero keeps the subtitle visible until it is replaced or
+ * explicitly cleared. */
 void gfx_widget_set_ai_service_message(
-      const char *message, unsigned duration);
+      const char *message, unsigned duration,
+      unsigned target_language);
 void gfx_widget_clear_ai_service_message(void);
 #endif
 

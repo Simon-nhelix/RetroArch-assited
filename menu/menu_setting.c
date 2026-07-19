@@ -3381,6 +3381,24 @@ static size_t setting_get_string_representation_password(
 #endif
 
 #ifdef HAVE_TRANSLATE
+static size_t setting_get_string_representation_ai_service_backend(
+      rarch_setting_t *setting, char *s, size_t len)
+{
+   const char *backend;
+
+   if (!setting || !(backend = setting->value.target.string))
+      return 0;
+   if (string_is_equal(backend, "openai"))
+      return strlcpy(s, "OpenAI Vision", len);
+   if (string_is_equal(backend, "apple_ocr_openai"))
+      return strlcpy(s, "Apple OCR + OpenAI", len);
+   if (string_is_equal(backend, "apple"))
+      return strlcpy(s, "Apple On-Device", len);
+   if (string_is_equal(backend, "http"))
+      return strlcpy(s, "HTTP (Legacy)", len);
+   return strlcpy(s, backend, len);
+}
+
 static size_t setting_get_string_representation_ai_service_api_key(
       rarch_setting_t *setting, char *s, size_t len)
 {
@@ -10016,6 +10034,39 @@ static void audio_driver_write_handler(rarch_setting_t *setting)
 }
 
 #ifdef HAVE_TRANSLATE
+static int setting_action_ok_ai_service_toggle(
+      rarch_setting_t *setting, size_t idx, bool wraparound)
+{
+   const char *msg             = NULL;
+   settings_t *settings        = config_get_ptr();
+   runloop_state_t *runloop_st = runloop_state_get_ptr();
+   (void)setting;
+   (void)idx;
+   (void)wraparound;
+
+   if (!settings || !settings->bools.ai_service_enable)
+      msg = msg_hash_to_str(MSG_AI_SERVICE_DISABLED);
+   else if (   !runloop_st
+            || runloop_st->current_core_type == CORE_TYPE_DUMMY
+            || !(runloop_st->flags & RUNLOOP_FLAG_CORE_RUNNING))
+      msg = msg_hash_to_str(MSG_AI_SERVICE_NO_CONTENT);
+
+   if (msg)
+   {
+      RARCH_ERR("[AI Service] %s\n", msg);
+      runloop_msg_queue_push(msg, strlen(msg), 1, 180, true, NULL,
+            MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_ERROR);
+      return 0;
+   }
+
+   /* Close the settings menu first. The translation command captures the
+    * cached game frame, so it must run after control has returned to content. */
+   if (!command_event(CMD_EVENT_RESUME, NULL))
+      return -1;
+
+   return command_event(CMD_EVENT_AI_SERVICE_TOGGLE, NULL) ? 0 : -1;
+}
+
 static void ai_service_enable_change_handler(rarch_setting_t *setting)
 {
    access_state_t *access_st = access_state_get_ptr();
@@ -15793,6 +15844,7 @@ static void settings_build_ai_service(
       SETTINGS_ACTION_SET(ok, &(*list)[list_info->index - 1], setting_action_ok_uint)
       SETTINGS_ACTION_SET(left, &(*list)[list_info->index - 1], setting_string_action_left_options)
       SETTINGS_ACTION_SET(right, &(*list)[list_info->index - 1], setting_string_action_right_options)
+      SETTINGS_ACTION_SET(repr, &(*list)[list_info->index - 1], setting_get_string_representation_ai_service_backend)
 
       /* Descriptor holdout: poke tail outside the descriptor grammar. */
       CONFIG_STRING(
@@ -15829,6 +15881,23 @@ static void settings_build_ai_service(
       SETTINGS_ACTION_SET(left, &(*list)[list_info->index - 1], setting_string_action_left_options)
       SETTINGS_ACTION_SET(right, &(*list)[list_info->index - 1], setting_string_action_right_options)
       SETTINGS_ACTION_SET(start, &(*list)[list_info->index - 1], setting_string_action_start_input)
+
+      CONFIG_STRING_OPTIONS(
+            list, list_info,
+            settings->arrays.ai_service_reasoning_effort,
+            sizeof(settings->arrays.ai_service_reasoning_effort),
+            MENU_ENUM_LABEL_AI_SERVICE_REASONING_EFFORT,
+            MENU_ENUM_LABEL_VALUE_AI_SERVICE_REASONING_EFFORT,
+            DEFAULT_AI_SERVICE_REASONING_EFFORT,
+            strdup("default|low|medium|high|xhigh|max"),
+            &group_info,
+            &subgroup_info,
+            parent_group,
+            ai_service_translation_write_handler,
+            general_read_handler);
+      SETTINGS_ACTION_SET(ok, &(*list)[list_info->index - 1], setting_action_ok_uint)
+      SETTINGS_ACTION_SET(left, &(*list)[list_info->index - 1], setting_string_action_left_options)
+      SETTINGS_ACTION_SET(right, &(*list)[list_info->index - 1], setting_string_action_right_options)
 
       CONFIG_STRING(
             list, list_info,

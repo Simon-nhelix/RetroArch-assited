@@ -1583,6 +1583,7 @@ static struct config_array_setting *populate_settings_array(
    SETTING_ARRAY("midi_output",                  settings->arrays.midi_output, true, DEFAULT_MIDI_OUTPUT, true);
    SETTING_ARRAY("ai_service_backend",           settings->arrays.ai_service_backend, false, NULL, true);
    SETTING_ARRAY("ai_service_model",             settings->arrays.ai_service_model, true, DEFAULT_AI_SERVICE_MODEL, true);
+   SETTING_ARRAY("ai_service_reasoning_effort",  settings->arrays.ai_service_reasoning_effort, true, DEFAULT_AI_SERVICE_REASONING_EFFORT, true);
    SETTING_ARRAY("ai_service_api_key",           settings->arrays.ai_service_api_key, true, DEFAULT_AI_SERVICE_API_KEY, true);
 
    SETTING_ARRAY("video_driver",                 settings->arrays.video_driver, false, NULL, true);
@@ -5354,6 +5355,9 @@ void config_set_defaults(void *data)
    configuration_set_string(settings,
          settings->arrays.ai_service_model,
          DEFAULT_AI_SERVICE_MODEL);
+   configuration_set_string(settings,
+         settings->arrays.ai_service_reasoning_effort,
+         DEFAULT_AI_SERVICE_REASONING_EFFORT);
    configuration_set_string(settings,
          settings->arrays.ai_service_api_key,
          DEFAULT_AI_SERVICE_API_KEY);

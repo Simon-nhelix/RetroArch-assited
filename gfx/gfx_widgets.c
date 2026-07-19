@@ -932,6 +932,23 @@ static void gfx_widgets_layout(
             is_threaded, font_path, MSG_QUEUE_FONT_SIZE);
    }
 
+#ifdef HAVE_TRANSLATE
+   /* Translation output must follow the selected target language, not the UI
+    * language. Preload an isolated Hangul-capable font during widget layout so
+    * switching the target to Korean never lazily creates or frees a font from
+    * the translation response/render path. */
+   {
+      char ai_service_font_file[PATH_MAX_LENGTH];
+      fill_pathname_join_special(ai_service_font_file,
+            p_dispwidget->assets_pkg_dir,
+            "korean-fallback-font.ttf",
+            sizeof(ai_service_font_file));
+      gfx_widgets_font_init(p_disp, p_dispwidget,
+            &p_dispwidget->gfx_widget_fonts.ai_service_korean,
+            is_threaded, ai_service_font_file, MSG_QUEUE_FONT_SIZE);
+   }
+#endif
+
    /* Calculate dimensions */
    p_dispwidget->simple_widget_padding            = p_dispwidget->gfx_widget_fonts.regular.line_height * (2.0f / 3.0f) + 0.5f;
    p_dispwidget->simple_widget_height             = p_dispwidget->gfx_widget_fonts.regular.line_height + p_dispwidget->simple_widget_padding;
@@ -1719,6 +1736,12 @@ void gfx_widgets_frame(void *data)
          &p_dispwidget->gfx_widget_fonts.bold.raster_block);
    font_driver_bind_block(p_dispwidget->gfx_widget_fonts.msg_queue.font,
          &p_dispwidget->gfx_widget_fonts.msg_queue.raster_block);
+#ifdef HAVE_TRANSLATE
+   if (p_dispwidget->gfx_widget_fonts.ai_service_korean.font)
+      font_driver_bind_block(
+            p_dispwidget->gfx_widget_fonts.ai_service_korean.font,
+            &p_dispwidget->gfx_widget_fonts.ai_service_korean.raster_block);
+#endif
 
    p_dispwidget->gfx_widget_fonts.regular.raster_block.carr.coords.vertices   = 0;
    p_dispwidget->gfx_widget_fonts.regular.usage_count                         = 0;
@@ -1726,6 +1749,10 @@ void gfx_widgets_frame(void *data)
    p_dispwidget->gfx_widget_fonts.bold.usage_count                            = 0;
    p_dispwidget->gfx_widget_fonts.msg_queue.raster_block.carr.coords.vertices = 0;
    p_dispwidget->gfx_widget_fonts.msg_queue.usage_count                       = 0;
+#ifdef HAVE_TRANSLATE
+   p_dispwidget->gfx_widget_fonts.ai_service_korean.raster_block.carr.coords.vertices = 0;
+   p_dispwidget->gfx_widget_fonts.ai_service_korean.usage_count = 0;
+#endif
 
 #ifdef HAVE_TRANSLATE
    /* AI Service overlay */
@@ -2011,11 +2038,20 @@ void gfx_widgets_frame(void *data)
          &p_dispwidget->gfx_widget_fonts.bold);
    gfx_widgets_flush_text(video_width, video_height,
          &p_dispwidget->gfx_widget_fonts.msg_queue);
+#ifdef HAVE_TRANSLATE
+   gfx_widgets_flush_text(video_width, video_height,
+         &p_dispwidget->gfx_widget_fonts.ai_service_korean);
+#endif
 
    /* Unbind fonts */
    font_driver_bind_block(p_dispwidget->gfx_widget_fonts.regular.font, NULL);
    font_driver_bind_block(p_dispwidget->gfx_widget_fonts.bold.font, NULL);
    font_driver_bind_block(p_dispwidget->gfx_widget_fonts.msg_queue.font, NULL);
+#ifdef HAVE_TRANSLATE
+   if (p_dispwidget->gfx_widget_fonts.ai_service_korean.font)
+      font_driver_bind_block(
+            p_dispwidget->gfx_widget_fonts.ai_service_korean.font, NULL);
+#endif
 
    if (video_st->current_video && video_st->current_video->set_viewport)
       video_st->current_video->set_viewport(
@@ -2108,6 +2144,10 @@ static void gfx_widgets_free(dispgfx_widget_t *p_dispwidget)
          &p_dispwidget->gfx_widget_fonts.bold.raster_block.carr);
    video_coord_array_free(
          &p_dispwidget->gfx_widget_fonts.msg_queue.raster_block.carr);
+#ifdef HAVE_TRANSLATE
+   video_coord_array_free(
+         &p_dispwidget->gfx_widget_fonts.ai_service_korean.raster_block.carr);
+#endif
 
    font_driver_bind_block(NULL, NULL);
 }
@@ -2342,6 +2382,10 @@ static void gfx_widgets_context_destroy(dispgfx_widget_t *p_dispwidget)
    gfx_widgets_font_free(&p_dispwidget->gfx_widget_fonts.regular);
    gfx_widgets_font_free(&p_dispwidget->gfx_widget_fonts.bold);
    gfx_widgets_font_free(&p_dispwidget->gfx_widget_fonts.msg_queue);
+#ifdef HAVE_TRANSLATE
+   gfx_widgets_font_free(
+         &p_dispwidget->gfx_widget_fonts.ai_service_korean);
+#endif
 }
 
 void gfx_widgets_deinit(bool widgets_persisting)
