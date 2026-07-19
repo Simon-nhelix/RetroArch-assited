@@ -477,8 +477,10 @@ StringComboBox::StringComboBox(rarch_setting_t *setting, QWidget *parent) :
    QComboBox(parent)
    ,m_setting(setting)
    ,m_value(setting->value.target.string)
+   ,m_values(setting->values)
 {
-   addItems(QString(setting->values).split('|'));
+   addItems(m_values.split('|'));
+   setEditable((setting->flags & SD_FLAG_ALLOW_INPUT) != 0);
 
    connect(this, SIGNAL(currentTextChanged(const QString&)), this,
 		 SLOT(onCurrentTextChanged(const QString&)));
@@ -495,6 +497,15 @@ void StringComboBox::onCurrentTextChanged(const QString &text)
 
 void StringComboBox::paintEvent(QPaintEvent *event)
 {
+   QString values(m_setting->values);
+   if (values != m_values)
+   {
+      bool signals_blocked = blockSignals(true);
+      clear();
+      addItems(values.split('|'));
+      m_values = values;
+      blockSignals(signals_blocked);
+   }
    setCurrentText(m_value);
    QComboBox::paintEvent(event);
 }

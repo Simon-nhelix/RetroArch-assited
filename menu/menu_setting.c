@@ -3380,6 +3380,18 @@ static size_t setting_get_string_representation_password(
 }
 #endif
 
+#ifdef HAVE_TRANSLATE
+static size_t setting_get_string_representation_ai_service_api_key(
+      rarch_setting_t *setting, char *s, size_t len)
+{
+   if (   setting
+       && setting->value.target.string
+       && setting->value.target.string[0] != '\0')
+      return strlcpy(s, "********", len);
+   return 0;
+}
+#endif
+
 #if TARGET_OS_IPHONE
 static size_t setting_get_string_representation_uint_keyboard_gamepad_mapping_type(
       rarch_setting_t *setting, char *s, size_t len)
@@ -10003,6 +10015,133 @@ static void audio_driver_write_handler(rarch_setting_t *setting)
                     | MENU_ST_FLAG_ENTRIES_NEED_REFRESH;
 }
 
+#ifdef HAVE_TRANSLATE
+static void ai_service_enable_change_handler(rarch_setting_t *setting)
+{
+   access_state_t *access_st = access_state_get_ptr();
+
+   ai_service_invalidate_translation();
+
+   if (   setting
+       && setting->value.target.boolean
+       && !*setting->value.target.boolean
+       && access_st)
+      access_st->ai_service_auto = 0;
+}
+
+static int setting_string_action_start_input(rarch_setting_t *setting)
+{
+   return setting_generic_action_ok_linefeed(setting, 0, false);
+}
+
+static int setting_string_option_action(rarch_setting_t *setting,
+      bool forward, bool wraparound)
+{
+   const char *token;
+   size_t option_count = 0;
+   size_t current      = (size_t)-1;
+   size_t selected;
+
+   if (!setting || !setting->values || !*setting->values)
+      return -1;
+
+   token = setting->values;
+   while (*token)
+   {
+      const char *end = strchr(token, '|');
+      size_t len      = end ? (size_t)(end - token) : strlen(token);
+
+      if (   strlen(setting->value.target.string) == len
+          && memcmp(setting->value.target.string, token, len) == 0)
+         current = option_count;
+      option_count++;
+      token = end ? end + 1 : token + len;
+   }
+
+   if (current == (size_t)-1)
+      selected = forward ? 0 : option_count - 1;
+   else if (forward)
+      selected = current + 1 < option_count
+            ? current + 1 : (wraparound ? 0 : current);
+   else
+      selected = current > 0
+            ? current - 1 : (wraparound ? option_count - 1 : current);
+
+   token = setting->values;
+   while (selected-- > 0)
+   {
+      const char *end = strchr(token, '|');
+      if (!end)
+         return -1;
+      token = end + 1;
+   }
+
+   {
+      const char *end = strchr(token, '|');
+      size_t len      = end ? (size_t)(end - token) : strlen(token);
+      if (len >= setting->size)
+         len = setting->size - 1;
+      memcpy(setting->value.target.string, token, len);
+      setting->value.target.string[len] = '\0';
+   }
+
+   if (setting->actions->change)
+      setting->actions->change(setting);
+   return 0;
+}
+
+static int setting_string_action_left_options(
+      rarch_setting_t *setting, size_t idx, bool wraparound)
+{
+   (void)idx;
+   return setting_string_option_action(setting, false, wraparound);
+}
+
+static int setting_string_action_right_options(
+      rarch_setting_t *setting, size_t idx, bool wraparound)
+{
+   (void)idx;
+   return setting_string_option_action(setting, true, wraparound);
+}
+
+static void ai_service_backend_write_handler(rarch_setting_t *setting)
+{
+   struct menu_state *menu_st = menu_state_get_ptr();
+   access_state_t *access_st   = access_state_get_ptr();
+   general_write_handler(setting);
+   ai_service_invalidate_translation();
+   if (access_st)
+      access_st->ai_service_auto = 0;
+   ai_service_refresh_models();
+   if (menu_st)
+      menu_st->flags |= MENU_ST_FLAG_PREVENT_POPULATE
+                     | MENU_ST_FLAG_ENTRIES_NEED_REFRESH;
+}
+
+static void ai_service_connection_write_handler(rarch_setting_t *setting)
+{
+   struct menu_state *menu_st = menu_state_get_ptr();
+   general_write_handler(setting);
+   ai_service_invalidate_translation();
+   ai_service_refresh_models();
+   if (menu_st)
+      menu_st->flags |= MENU_ST_FLAG_PREVENT_POPULATE
+                     | MENU_ST_FLAG_ENTRIES_NEED_REFRESH;
+}
+
+static void ai_service_translation_write_handler(rarch_setting_t *setting)
+{
+   general_write_handler(setting);
+   ai_service_invalidate_translation();
+}
+
+static void ai_service_translation_change_handler(rarch_setting_t *setting)
+{
+   (void)setting;
+   ai_service_invalidate_translation();
+}
+#endif
+
 static int setting_record_driver_action_left(
       rarch_setting_t *setting, size_t idx, bool wraparound)
 {
@@ -15649,11 +15788,11 @@ static void settings_build_ai_service(
             &group_info,
             &subgroup_info,
             parent_group,
-            general_write_handler,
+            ai_service_backend_write_handler,
             general_read_handler);
       SETTINGS_ACTION_SET(ok, &(*list)[list_info->index - 1], setting_action_ok_uint)
-      SETTINGS_ACTION_SET(left, &(*list)[list_info->index - 1], setting_string_action_left_driver)
-      SETTINGS_ACTION_SET(right, &(*list)[list_info->index - 1], setting_string_action_right_driver)
+      SETTINGS_ACTION_SET(left, &(*list)[list_info->index - 1], setting_string_action_left_options)
+      SETTINGS_ACTION_SET(right, &(*list)[list_info->index - 1], setting_string_action_right_options)
 
       /* Descriptor holdout: poke tail outside the descriptor grammar. */
       CONFIG_STRING(
@@ -15666,13 +15805,58 @@ static void settings_build_ai_service(
             &group_info,
             &subgroup_info,
             parent_group,
-            general_write_handler,
+            ai_service_connection_write_handler,
             general_read_handler);
       SETTINGS_DATA_LIST_CURRENT_ADD_FLAGS(list, list_info, SD_FLAG_ALLOW_INPUT);
       (*list)[list_info->index - 1].ui_type       = ST_UI_TYPE_STRING_LINE_EDIT;
       SETTINGS_ACTION_SET(start, &(*list)[list_info->index - 1], setting_generic_action_start_default)
 
+      CONFIG_STRING_OPTIONS(
+            list, list_info,
+            settings->arrays.ai_service_model,
+            sizeof(settings->arrays.ai_service_model),
+            MENU_ENUM_LABEL_AI_SERVICE_MODEL,
+            MENU_ENUM_LABEL_VALUE_AI_SERVICE_MODEL,
+            DEFAULT_AI_SERVICE_MODEL,
+            strdup(config_get_ai_service_model_options()),
+            &group_info,
+            &subgroup_info,
+            parent_group,
+            ai_service_translation_write_handler,
+            general_read_handler);
+      SETTINGS_DATA_LIST_CURRENT_ADD_FLAGS(list, list_info, SD_FLAG_ALLOW_INPUT);
+      SETTINGS_ACTION_SET(ok, &(*list)[list_info->index - 1], setting_action_ok_uint)
+      SETTINGS_ACTION_SET(left, &(*list)[list_info->index - 1], setting_string_action_left_options)
+      SETTINGS_ACTION_SET(right, &(*list)[list_info->index - 1], setting_string_action_right_options)
+      SETTINGS_ACTION_SET(start, &(*list)[list_info->index - 1], setting_string_action_start_input)
+
+      CONFIG_STRING(
+            list, list_info,
+            settings->arrays.ai_service_api_key,
+            sizeof(settings->arrays.ai_service_api_key),
+            MENU_ENUM_LABEL_AI_SERVICE_API_KEY,
+            MENU_ENUM_LABEL_VALUE_AI_SERVICE_API_KEY,
+            DEFAULT_AI_SERVICE_API_KEY,
+            &group_info,
+            &subgroup_info,
+            parent_group,
+            ai_service_connection_write_handler,
+            general_read_handler);
+      SETTINGS_DATA_LIST_CURRENT_ADD_FLAGS(list, list_info, SD_FLAG_ALLOW_INPUT);
+      (*list)[list_info->index - 1].ui_type       = ST_UI_TYPE_PASSWORD_LINE_EDIT;
+      SETTINGS_ACTION_SET(repr, &(*list)[list_info->index - 1], setting_get_string_representation_ai_service_api_key)
+      SETTINGS_ACTION_SET(start, &(*list)[list_info->index - 1], setting_generic_action_start_default)
+
             ADD_DESC(ai_service_desc_1);
+      SETTINGS_ACTION_SET(change,
+            &(*list)[list_info->index - ARRAY_SIZE(ai_service_desc_1)],
+            ai_service_enable_change_handler)
+      SETTINGS_ACTION_SET(change,
+            &(*list)[list_info->index - ARRAY_SIZE(ai_service_desc_1) + 2],
+            ai_service_translation_change_handler)
+      SETTINGS_ACTION_SET(change,
+            &(*list)[list_info->index - ARRAY_SIZE(ai_service_desc_1) + 3],
+            ai_service_translation_change_handler)
 
 
       GROUP_END();

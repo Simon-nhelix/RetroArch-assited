@@ -15,10 +15,15 @@
  */
 
 #include <stdint.h>
+#include <ctype.h>
+#include <limits.h>
+#include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include <boolean.h>
 #include <compat/strl.h>
+#include <features/features_cpu.h>
 #include <string/stdstring.h>
 
 #ifdef HAVE_CONFIG_H
@@ -26,6 +31,7 @@
 #endif
 
 #include <encodings/base64.h>
+#include <encodings/utf.h>
 #include <formats/rpng.h>
 #include <formats/rjson.h>
 #include <gfx/scaler/pixconv.h>
@@ -47,6 +53,11 @@
 #include "../runloop.h"
 #include "../verbosity.h"
 
+#ifdef HAVE_MENU
+#include "../menu/menu_driver.h"
+#include "../menu/menu_setting.h"
+#endif
+
 #include "tasks_internal.h"
 
 #ifdef HAVE_TRANSLATE_APPLE
@@ -60,9 +71,9 @@
 const char *config_get_ai_service_backend_options(void)
 {
 #ifdef HAVE_TRANSLATE_APPLE
-   return "http|apple";
+   return "http|openai|apple";
 #else
-   return "http";
+   return "http|openai";
 #endif
 }
 
@@ -95,6 +106,12 @@ typedef struct translation_response
 
    /* Auto-translate: if true, trigger another translation */
    bool auto_translate;
+
+   /* Render text through RetroArch's native on-screen message queue. */
+   bool show_text;
+
+   /* This is a cached-text visibility refresh, not new speech content. */
+   bool text_refresh;
 
    /* Key presses to simulate (space/comma separated) */
    char *key_presses;
@@ -140,8 +157,27 @@ typedef struct translation_driver
          void *userdata);
 } translation_driver_t;
 
+/* Shared request identity for every asynchronous translation backend. Menu
+ * changes and content/core lifecycle events advance this generation via
+ * ai_service_invalidate_translation(). The fingerprint additionally catches
+ * equivalent changes made outside normal menu handlers. */
+static uint64_t ai_service_config_generation;
+static uint64_t ai_service_request_config_fingerprint(
+      const settings_t *settings);
+
 /* Driver declarations */
 static bool http_translate(
+      const uint8_t *bit24_image,
+      unsigned width,
+      unsigned height,
+      const char *source_lang,
+      const char *target_lang,
+      unsigned mode,
+      const char *sys_lbl,
+      bool paused,
+      translation_response_cb_t callback,
+      void *userdata);
+static bool openai_translate(
       const uint8_t *bit24_image,
       unsigned width,
       unsigned height,
@@ -158,6 +194,12 @@ static translation_driver_t http_translation_driver = {
    NULL,  /* free */
    http_translate
 };
+static translation_driver_t openai_translation_driver = {
+   "openai",
+   NULL,  /* init */
+   NULL,  /* free */
+   openai_translate
+};
 
 #ifdef HAVE_TRANSLATE_APPLE
 static translation_driver_t apple_translation_driver;
@@ -165,6 +207,7 @@ static translation_driver_t apple_translation_driver;
 
 static translation_driver_t *translation_drivers[] = {
    &http_translation_driver,
+   &openai_translation_driver,
 #ifdef HAVE_TRANSLATE_APPLE
    &apple_translation_driver,
 #endif
@@ -206,20 +249,34 @@ bool is_narrator_running(bool accessibility_enable)
 }
 #endif
 
+typedef struct
+{
+   int mode;
+   uint64_t config_generation;
+} ai_service_auto_wait_ctx_t;
+
 static void task_auto_translate_handler(retro_task_t *task)
 {
-   int               *mode_ptr = (int*)task->user_data;
-   uint32_t runloop_flags      = runloop_get_flags();
-   access_state_t *access_st   = access_state_get_ptr();
+   ai_service_auto_wait_ctx_t *ctx =
+         (ai_service_auto_wait_ctx_t*)task->user_data;
+   uint32_t runloop_flags          = runloop_get_flags();
+   access_state_t *access_st       = access_state_get_ptr();
+   settings_t *settings            = config_get_ptr();
 #ifdef HAVE_ACCESSIBILITY
-   bool accessibility_enable   = config_get_ptr()->bools.accessibility_enable;
+   bool accessibility_enable       = settings
+         ? settings->bools.accessibility_enable : false;
 #endif
-   uint8_t flg                 = task_get_flags(task);
+   uint8_t flg                     = task_get_flags(task);
+   bool should_continue;
 
-   if ((flg & RETRO_TASK_FLG_CANCELLED) > 0)
+   if (   !ctx
+       || (flg & RETRO_TASK_FLG_CANCELLED) > 0
+       || ctx->config_generation != ai_service_config_generation
+       || !settings || !settings->bools.ai_service_enable
+       || access_st->ai_service_auto == 0)
       goto task_finished;
 
-   switch (*mode_ptr)
+   switch (ctx->mode)
    {
       case 1: /* Speech   Mode */
 #ifdef HAVE_AUDIOMIXER
@@ -228,11 +285,21 @@ static void task_auto_translate_handler(retro_task_t *task)
 #endif
          break;
       case 2: /* Narrator Mode */
+      case 3: /* Native text spoken by the accessibility narrator */
 #ifdef HAVE_ACCESSIBILITY
-         if (!is_narrator_running(accessibility_enable))
-            goto task_finished;
+         if (is_accessibility_enabled(
+                  accessibility_enable, access_st->enabled))
+         {
+            frontend_ctx_driver_t *frontend =
+                  frontend_state_get_ptr()->current_frontend_ctx;
+            if (frontend && frontend->is_narrator_running
+                  && frontend->is_narrator_running())
+               break;
+         }
 #endif
-         break;
+         /* If this frontend cannot report narrator state, keep auto mode
+          * functional instead of waiting forever. */
+         goto task_finished;
       default:
          break;
    }
@@ -240,18 +307,26 @@ static void task_auto_translate_handler(retro_task_t *task)
    return;
 
 task_finished:
-   if (access_st->ai_service_auto == 1)
+   should_continue = ctx
+         && !(flg & RETRO_TASK_FLG_CANCELLED)
+         && ctx->config_generation == ai_service_config_generation
+         && settings && settings->bools.ai_service_enable
+         && access_st->ai_service_auto != 0;
+
+   if (should_continue && access_st->ai_service_auto == 1)
       access_st->ai_service_auto = 2;
 
    task_set_flags(task, RETRO_TASK_FLG_FINISHED, true);
 
-   if (*mode_ptr == 1 || *mode_ptr == 2)
+   if (   should_continue
+       && (ctx->mode == 1 || ctx->mode == 2 || ctx->mode == 3))
    {
       bool was_paused = (runloop_flags & RUNLOOP_FLAG_PAUSED) ? true : false;
       command_event(CMD_EVENT_AI_SERVICE_CALL, &was_paused);
    }
-   if (task->user_data)
-       free(task->user_data);
+   if (ctx)
+      free(ctx);
+   task->user_data = NULL;
 }
 
 static void ai_service_call_auto_translate_task(access_state_t *access_st,
@@ -267,23 +342,22 @@ static void ai_service_call_auto_translate_task(access_state_t *access_st,
    }
    else /* Speech or Narrator Mode */
    {
-      int* mode          = NULL;
-      retro_task_t  *t   = task_init();
+      ai_service_auto_wait_ctx_t *ctx;
+      retro_task_t *t = task_init();
       if (!t)
          return;
 
-      mode               = (int*)malloc(sizeof(int));
-
-      t->user_data       = NULL;
-      t->handler         = task_auto_translate_handler;
-      t->flags          |= RETRO_TASK_FLG_MUTE;
-
-      if (mode)
+      if (!(ctx = (ai_service_auto_wait_ctx_t*)malloc(sizeof(*ctx))))
       {
-         *mode           = ai_service_mode;
-         t->user_data    = mode;
+         free(t);
+         return;
       }
 
+      ctx->mode              = ai_service_mode;
+      ctx->config_generation = ai_service_config_generation;
+      t->user_data           = ctx;
+      t->handler             = task_auto_translate_handler;
+      t->flags              |= RETRO_TASK_FLG_MUTE;
       task_queue_push(t);
    }
 }
@@ -316,6 +390,7 @@ static void handle_translation_response(
 #ifdef HAVE_ACCESSIBILITY
    bool accessibility_enable         = settings->bools.accessibility_enable;
    unsigned accessibility_narrator_speech_speed = settings->uints.accessibility_narrator_speech_speed;
+   bool native_text_queue_speaks     = false;
 #endif
 
    if (!response)
@@ -334,6 +409,13 @@ static void handle_translation_response(
    if (response->error)
    {
       RARCH_ERR("[Translation] %s\n", response->error);
+      if (!string_is_equal(response->error, "No text found."))
+      {
+         access_st->ai_service_auto = 0;
+         runloop_msg_queue_push(response->error, strlen(response->error),
+               2, 240, true, NULL,
+               MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_ERROR);
+      }
 #ifdef HAVE_GFX_WIDGETS
       if (   string_is_equal(response->error, "No text found.") 
           && gfx_widgets_paused)
@@ -675,8 +757,39 @@ static void handle_translation_response(
       }
    }
 
+   /* OpenAI-compatible backends return translated text directly. Always
+    * render it natively: the global AI Service default is Speech Mode, but a
+    * Chat Completions endpoint does not return RetroArch's legacy WAV/image
+    * response. The dedicated AI Service widget updates in place, so it does
+    * not replace save-state/core/system notifications. */
+   if (   response->show_text
+       && response->text && *response->text)
+   {
+#ifdef HAVE_GFX_WIDGETS
+      if (p_dispwidget->active)
+         gfx_widget_set_ai_service_message(response->text, 2500);
+      else
+#endif
+      {
+         /* The non-widget queue cannot update an existing entry in place.
+          * Only enqueue new translations (not the 2-second visibility
+          * refresh), never flush unrelated warnings, and keep narration in
+          * the explicit AI Service path below. */
+         if (!response->text_refresh)
+            runloop_msg_queue_push_no_narrator(
+                  response->text, strlen(response->text),
+                  0, 600, false, NULL,
+                  MESSAGE_QUEUE_ICON_DEFAULT,
+                  MESSAGE_QUEUE_CATEGORY_INFO);
+      }
+   }
+
 #ifdef HAVE_ACCESSIBILITY
    if (   response->text
+         && !response->text_refresh
+         && (   !response->show_text
+             || (   !native_text_queue_speaks
+                 && ai_service_mode != 0))
          && is_accessibility_enabled(
             accessibility_enable, access_st->enabled))
       accessibility_speak_priority(
@@ -700,8 +813,19 @@ finish:
    {
       bool was_paused = (runloop_flags & RUNLOOP_FLAG_PAUSED) ? true : false;
       if (access_st->ai_service_auto != 0 && !ai_service_pause)
-         ai_service_call_auto_translate_task(access_st, ai_service_mode,
+      {
+         /* Native text still needs an on-screen overlay in all output modes,
+          * but Speech/Narrator must wait for the accessibility voice to
+          * finish before taking and narrating the next frame. */
+         unsigned auto_wait_mode = ai_service_mode;
+         if (response->show_text && ai_service_mode == 1)
+            auto_wait_mode = 3;
+         else if (response->show_text && ai_service_mode == 2)
+            auto_wait_mode = 2;
+         ai_service_call_auto_translate_task(access_st,
+               auto_wait_mode,
                &was_paused);
+      }
    }
 }
 
@@ -859,6 +983,7 @@ struct translation_sw_ctx
    unsigned           width;
    unsigned           height;
    size_t             pitch;
+   bool               converted;
 };
 
 static void translation_sw_convert_cb(void *userdata,
@@ -866,12 +991,13 @@ static void translation_sw_convert_cb(void *userdata,
       unsigned width, unsigned height, size_t pitch)
 {
    struct translation_sw_ctx *ctx = (struct translation_sw_ctx*)userdata;
-   if (!data || !ctx || !ctx->dst)
+   if (   !data || !ctx || !ctx->dst || !ctx->scaler
+       || width != ctx->width || height != ctx->height)
       return;
-   /* If the dimensions shifted between cached_frame_info and
-    * here (shouldn't with same-thread access but cheap to defend),
-    * trust the cached_frame_read parameters which describe the
-    * actual buffer we were given. */
+
+   /* cached_frame_info() and cached_frame_read() take separate locks. If a
+    * new frame is published between them, never convert its dimensions into
+    * a buffer sized for the previous frame. */
    video_frame_convert_to_bgr24(
          ctx->scaler,
          ctx->dst,
@@ -880,6 +1006,7 @@ static void translation_sw_convert_cb(void *userdata,
          (int)-pitch,
          width, height,
          width * 3);
+   ctx->converted = true;
 }
 
 bool run_translation_service(settings_t *settings, bool paused)
@@ -973,8 +1100,10 @@ bool run_translation_service(settings_t *settings, bool paused)
          if (!vp.width || !vp.height)
             goto finish;
 
-         bit24_image_prev = (uint8_t*)malloc(vp.width * vp.height * 3);
-         bit24_image      = (uint8_t*)malloc(width * height * 3);
+         bit24_image_prev = (uint8_t*)malloc(
+               (size_t)vp.width * vp.height * 3);
+         bit24_image      = (uint8_t*)malloc(
+               (size_t)width * height * 3);
 
          if (!bit24_image_prev || !bit24_image)
             goto finish;
@@ -1017,7 +1146,8 @@ bool run_translation_service(settings_t *settings, bool paused)
          const enum retro_pixel_format
             video_driver_pix_fmt           = video_st->pix_fmt;
 
-         if (!(bit24_image = (uint8_t*)malloc(width * height * 3)))
+         if (!(bit24_image = (uint8_t*)malloc(
+                     (size_t)width * height * 3)))
             goto finish;
 
          if (video_driver_pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888)
@@ -1032,8 +1162,11 @@ bool run_translation_service(settings_t *settings, bool paused)
             ctx.width  = width;
             ctx.height = height;
             ctx.pitch  = pitch;
+            ctx.converted = false;
             video_driver_cached_frame_read(&ctx,
                   translation_sw_convert_cb);
+            if (!ctx.converted)
+               goto finish;
          }
       }
    }
@@ -1097,7 +1230,13 @@ typedef struct
 {
    translation_response_cb_t callback;
    void *userdata;
+   uint64_t request_id;
+   uint64_t config_generation;
+   uint64_t config_fingerprint;
+   char backend[32];
 } http_translate_ctx_t;
+
+static uint64_t http_latest_request_id;
 
 static void handle_translation_cb(
       retro_task_t *task, void *task_data,
@@ -1113,9 +1252,40 @@ static void handle_translation_cb(
    char *err_str                  = NULL;
    char *auto_str                 = NULL;
    access_state_t *access_st      = access_state_get_ptr();
+   settings_t *settings           = config_get_ptr();
+   bool service_active;
+   bool request_current;
+   bool config_current;
 
    /* Initialize response */
    memset(&response, 0, sizeof(response));
+
+   service_active = ctx && settings
+         && settings->bools.ai_service_enable
+         && string_is_equal(settings->arrays.ai_service_backend,
+               ctx->backend);
+   request_current = ctx
+         && ctx->request_id == http_latest_request_id;
+   config_current = service_active
+         && ctx->config_generation == ai_service_config_generation
+         && ctx->config_fingerprint
+               == ai_service_request_config_fingerprint(settings);
+
+   if (!ctx || !request_current || !config_current)
+   {
+      /* A same-backend configuration change can invalidate the sole pending
+       * legacy request while auto translation remains enabled. Emit an empty
+       * control cycle only for that still-latest request, allowing the generic
+       * handler to capture again without applying stale payload data. */
+      if (   ctx && request_current && service_active && ctx->callback
+          && access_st->ai_service_auto != 0)
+      {
+         response.auto_translate = true;
+         response.show_text       = true;
+         ctx->callback(&response, ctx->userdata);
+      }
+      goto finish;
+   }
 
 #ifdef DEBUG
    if (access_st->ai_service_auto != 2)
@@ -1278,6 +1448,16 @@ static bool http_translate(
 #ifdef DEBUG
    access_state_t *access_st         = access_state_get_ptr();
 #endif
+   uint64_t request_id;
+   uint64_t config_fingerprint;
+
+   if (!settings || !settings->bools.ai_service_enable
+         || !bit24_image || width == 0 || height == 0)
+      return false;
+   if (++http_latest_request_id == 0)
+      ++http_latest_request_id;
+   request_id         = http_latest_request_id;
+   config_fingerprint = ai_service_request_config_fingerprint(settings);
 
    /* Encode the framebuffer screenshot as a PNG (BGR24) for the
     * translation service.  rpng_save_image_bgr24_string handles the
@@ -1458,22 +1638,1003 @@ static bool http_translate(
          ctx = (http_translate_ctx_t*)malloc(sizeof(*ctx));
          if (ctx)
          {
-            ctx->callback = callback;
-            ctx->userdata = userdata;
-            task_push_http_post_transfer(new_ai_service_url,
-                  json_buffer, true, NULL, handle_translation_cb, ctx);
-            success = true;
+            ctx->callback           = callback;
+            ctx->userdata           = userdata;
+            ctx->request_id         = request_id;
+            ctx->config_generation  = ai_service_config_generation;
+            ctx->config_fingerprint = config_fingerprint;
+            strlcpy(ctx->backend, settings->arrays.ai_service_backend,
+                  sizeof(ctx->backend));
+            if (task_push_http_post_transfer(new_ai_service_url,
+                     json_buffer, true, NULL, handle_translation_cb, ctx))
+            {
+               ctx     = NULL; /* HTTP task owns it. */
+               success = true;
+            }
          }
       }
    }
 
 finish:
+   if (ctx)
+      free(ctx);
    if (bmp_buffer)
       free(bmp_buffer);
    if (bmp64_buffer)
       free(bmp64_buffer);
    if (jsonwriter)
       rjsonwriter_free(jsonwriter);
+   return success;
+}
+
+/* ============================================================
+ * OPENAI-COMPATIBLE TRANSLATION BACKEND
+ * ============================================================
+ * Talks directly to CLIProxy, OpenRouter, or another Chat Completions
+ * endpoint. Game identity and translation instructions are included in the
+ * same vision request, so there is no primer/background model call.
+ */
+
+#define OPENAI_SIGNATURE_WIDTH         128
+#define OPENAI_SIGNATURE_HEIGHT        96
+#define OPENAI_SIGNATURE_PIXELS        (OPENAI_SIGNATURE_WIDTH * OPENAI_SIGNATURE_HEIGHT)
+#define OPENAI_IMAGE_MAX_DIMENSION     1280
+#define OPENAI_CONTEXT_SIZE            2048
+#define OPENAI_TRANSLATION_TEXT_SIZE   16384
+#define OPENAI_MODEL_OPTIONS_SIZE      65536
+#define OPENAI_MODEL_REFRESH_SECONDS   30
+#define OPENAI_UNCHANGED_POLL_USEC     (100 * 1000)
+#define OPENAI_TEXT_REFRESH_USEC       (2 * 1000 * 1000)
+
+typedef struct
+{
+   translation_response_cb_t callback;
+   void *userdata;
+   uint64_t request_id;
+   uint64_t config_generation;
+   uint64_t config_fingerprint;
+   uint8_t signature[OPENAI_SIGNATURE_PIXELS];
+   char context[OPENAI_CONTEXT_SIZE];
+} openai_translate_ctx_t;
+
+typedef struct
+{
+   translation_response_cb_t callback;
+   void *userdata;
+   uint64_t request_id;
+   uint64_t config_generation;
+   uint64_t config_fingerprint;
+} openai_unchanged_ctx_t;
+
+typedef struct
+{
+   uint64_t request_id;
+} openai_models_ctx_t;
+
+static uint8_t openai_last_signature[OPENAI_SIGNATURE_PIXELS];
+static char openai_last_context[OPENAI_CONTEXT_SIZE];
+static char openai_last_text[OPENAI_TRANSLATION_TEXT_SIZE];
+static retro_time_t openai_last_text_refresh;
+static bool openai_last_signature_valid;
+static uint64_t openai_latest_request_id;
+static uint64_t openai_last_config_generation;
+static uint64_t openai_last_config_fingerprint;
+
+static char openai_model_options[OPENAI_MODEL_OPTIONS_SIZE];
+static char openai_model_options_source[PATH_MAX_LENGTH];
+static uint32_t openai_model_options_key_hash;
+static bool openai_models_loading;
+static time_t openai_models_last_refresh;
+static uint64_t openai_models_request_id;
+
+static uint64_t openai_next_request_id(void)
+{
+   if (++openai_latest_request_id == 0)
+      ++openai_latest_request_id;
+   return openai_latest_request_id;
+}
+
+static uint32_t openai_hash_string(const char *text)
+{
+   uint32_t hash = UINT32_C(2166136261);
+
+   if (!text)
+      return hash;
+
+   while (*text)
+   {
+      hash ^= (uint8_t)*text++;
+      hash *= UINT32_C(16777619);
+   }
+   return hash;
+}
+
+static uint64_t openai_hash_bytes(uint64_t hash,
+      const void *data, size_t size)
+{
+   const uint8_t *bytes = (const uint8_t*)data;
+
+   while (size-- > 0)
+   {
+      hash ^= *bytes++;
+      hash *= UINT64_C(1099511628211);
+   }
+   return hash;
+}
+
+static uint64_t openai_hash_field(uint64_t hash, const char *text)
+{
+   static const uint8_t separator = 0;
+
+   if (text)
+      hash = openai_hash_bytes(hash, text, strlen(text));
+   return openai_hash_bytes(hash, &separator, sizeof(separator));
+}
+
+/* Captures every setting that can change the meaning or destination of an
+ * in-flight translation, plus the active content/core identity. Generation
+ * invalidation handles values that are changed away and then back; this
+ * fingerprint also protects changes made outside the menu handlers. */
+static uint64_t ai_service_request_config_fingerprint(const settings_t *settings)
+{
+   uint64_t hash = UINT64_C(1469598103934665603);
+   const char *content_path = path_get(RARCH_PATH_CONTENT);
+   core_info_t *core_info   = NULL;
+
+   if (!settings)
+      return 0;
+
+   hash = openai_hash_field(hash, settings->arrays.ai_service_backend);
+   hash = openai_hash_field(hash, settings->arrays.ai_service_url);
+   hash = openai_hash_field(hash, settings->arrays.ai_service_model);
+   hash = openai_hash_field(hash, settings->arrays.ai_service_api_key);
+   hash = openai_hash_bytes(hash,
+         &settings->uints.ai_service_source_lang,
+         sizeof(settings->uints.ai_service_source_lang));
+   hash = openai_hash_bytes(hash,
+         &settings->uints.ai_service_target_lang,
+         sizeof(settings->uints.ai_service_target_lang));
+   hash = openai_hash_bytes(hash,
+         &settings->uints.ai_service_mode,
+         sizeof(settings->uints.ai_service_mode));
+   hash = openai_hash_field(hash, content_path ? content_path : "");
+
+   core_info_get_current_core(&core_info);
+   hash = openai_hash_field(hash,
+         core_info && core_info->system_id ? core_info->system_id : "");
+   return hash;
+}
+
+void ai_service_invalidate_translation(void)
+{
+   if (++ai_service_config_generation == 0)
+      ++ai_service_config_generation;
+   openai_last_signature_valid = false;
+   openai_last_signature[0]    = 0;
+   openai_last_context[0]      = '\0';
+   openai_last_text[0]         = '\0';
+   openai_last_text_refresh    = 0;
+   openai_last_config_generation  = 0;
+   openai_last_config_fingerprint = 0;
+#ifdef HAVE_GFX_WIDGETS
+   gfx_widget_clear_ai_service_message();
+#endif
+}
+
+static void openai_update_model_setting_values(const char *options)
+{
+#ifdef HAVE_MENU
+   rarch_setting_t *setting =
+         menu_setting_find_enum(MENU_ENUM_LABEL_AI_SERVICE_MODEL);
+   char *copy;
+
+   if (!setting || !(copy = strdup(options ? options : "")))
+      return;
+
+   if (setting->values)
+      free((void*)setting->values);
+   setting->values = copy;
+#else
+   (void)options;
+#endif
+}
+
+static bool openai_build_api_url(const char *base, bool models,
+      char *out, size_t out_size)
+{
+   static const char completions_suffix[] = "/chat/completions";
+   static const char models_suffix[]      = "/models";
+   char tail[PATH_MAX_LENGTH];
+   char *suffix;
+   char *tail_start;
+   size_t len;
+
+   if (!base || !*base || !out || out_size < 2)
+      return false;
+
+   if (strlcpy(out, base, out_size) >= out_size)
+      return false;
+
+   tail[0]   = '\0';
+   tail_start = strpbrk(out, "?#");
+   if (tail_start)
+   {
+      if (strlcpy(tail, tail_start, sizeof(tail)) >= sizeof(tail))
+         return false;
+      *tail_start = '\0';
+   }
+
+   len = strlen(out);
+   while (len > 0 && out[len - 1] == '/')
+      out[--len] = '\0';
+
+   suffix = strstr(out, completions_suffix);
+   if (suffix && suffix[strlen(completions_suffix)] == '\0')
+   {
+      if (!models)
+         goto append_tail;
+      *suffix = '\0';
+      if (strlcat(out, models_suffix, out_size) >= out_size)
+         return false;
+      goto append_tail;
+   }
+
+   if (string_ends_with(out, models_suffix))
+   {
+      if (models)
+         goto append_tail;
+      out[strlen(out) - (sizeof(models_suffix) - 1)] = '\0';
+      if (strlcat(out, completions_suffix, out_size) >= out_size)
+         return false;
+      goto append_tail;
+   }
+
+   if (!string_ends_with(out, "/v1"))
+      if (strlcat(out, "/v1", out_size) >= out_size)
+         return false;
+
+   if (strlcat(out, models ? models_suffix : completions_suffix,
+            out_size) >= out_size)
+      return false;
+
+append_tail:
+   return strlcat(out, tail, out_size) < out_size;
+}
+
+static bool openai_model_option_exists(const char *options,
+      const char *model, size_t model_len)
+{
+   const char *p = options;
+
+   if (!options || !model || model_len == 0)
+      return false;
+
+   while (p && *p)
+   {
+      const char *end = strchr(p, '|');
+      size_t len      = end ? (size_t)(end - p) : strlen(p);
+      if (len == model_len && memcmp(p, model, model_len) == 0)
+         return true;
+      p = end ? end + 1 : NULL;
+   }
+   return false;
+}
+
+static bool openai_append_model_option(char *options, size_t options_size,
+      size_t *used, const char *model, size_t model_len)
+{
+   if (!options || !used || !model || model_len == 0
+         || memchr(model, '|', model_len)
+         || openai_model_option_exists(options, model, model_len))
+      return false;
+
+   if (*used + model_len + (*used ? 1 : 0) + 1 > options_size)
+      return false;
+
+   if (*used)
+      options[(*used)++] = '|';
+   memcpy(options + *used, model, model_len);
+   *used += model_len;
+   options[*used] = '\0';
+   return true;
+}
+
+static void openai_refresh_menu(void)
+{
+#ifdef HAVE_MENU
+   struct menu_state *menu_st = menu_state_get_ptr();
+   if (menu_st)
+      menu_st->flags |= MENU_ST_FLAG_ENTRIES_NEED_REFRESH;
+#endif
+}
+
+static void openai_models_cb(retro_task_t *task, void *task_data,
+      void *user_data, const char *error)
+{
+   http_transfer_data_t *data = (http_transfer_data_t*)task_data;
+   openai_models_ctx_t *ctx    = (openai_models_ctx_t*)user_data;
+   settings_t *settings       = config_get_ptr();
+   char *options              = NULL;
+   size_t used                = 0;
+   rjson_t *json              = NULL;
+   enum rjson_type type;
+   (void)task;
+
+   if (!ctx || ctx->request_id != openai_models_request_id)
+      goto finish;
+
+   openai_models_loading = false;
+
+   if (   !settings || error || !data || !data->data
+       || data->status < 200 || data->status >= 300)
+      goto finish;
+
+   if (!(options = (char*)calloc(1, OPENAI_MODEL_OPTIONS_SIZE)))
+      goto finish;
+
+   if (settings->arrays.ai_service_model[0])
+      openai_append_model_option(options, OPENAI_MODEL_OPTIONS_SIZE, &used,
+            settings->arrays.ai_service_model,
+            strlen(settings->arrays.ai_service_model));
+
+   if (!(json = rjson_open_buffer(data->data, data->len)))
+      goto finish;
+
+   while ((type = rjson_next(json)) != RJSON_DONE && type != RJSON_ERROR)
+   {
+      const char *key;
+      size_t key_len;
+
+      if (type != RJSON_STRING
+            || rjson_get_context_type(json) != RJSON_OBJECT
+            || (rjson_get_context_count(json) & 1) != 1)
+         continue;
+
+      key = rjson_get_string(json, &key_len);
+      if (key_len != 2 || memcmp(key, "id", 2) != 0)
+         continue;
+
+      if (rjson_next(json) == RJSON_STRING)
+      {
+         const char *model;
+         size_t model_len;
+         model = rjson_get_string(json, &model_len);
+         openai_append_model_option(options, OPENAI_MODEL_OPTIONS_SIZE,
+               &used, model, model_len);
+      }
+   }
+
+   if (used > 0)
+   {
+      strlcpy(openai_model_options, options,
+            sizeof(openai_model_options));
+      openai_update_model_setting_values(openai_model_options);
+   }
+
+finish:
+   if (json)
+      rjson_free(json);
+   if (options)
+      free(options);
+   if (ctx && ctx->request_id == openai_models_request_id)
+      openai_refresh_menu();
+   if (ctx)
+      free(ctx);
+}
+
+const char *config_get_ai_service_model_options(void)
+{
+   settings_t *settings = config_get_ptr();
+
+   if (openai_model_options[0])
+      return openai_model_options;
+   if (settings && settings->arrays.ai_service_model[0])
+      return settings->arrays.ai_service_model;
+   return "";
+}
+
+void ai_service_refresh_models(void)
+{
+   settings_t *settings = config_get_ptr();
+   char models_url[PATH_MAX_LENGTH];
+   char headers[640];
+   const char *header_ptr = NULL;
+   uint32_t api_key_hash;
+   bool source_changed;
+   time_t now;
+   openai_models_ctx_t *ctx;
+   void *http_task;
+
+   if (!settings
+         || !settings->bools.ai_service_enable
+         || !string_is_equal(settings->arrays.ai_service_backend, "openai")
+         || !openai_build_api_url(settings->arrays.ai_service_url, true,
+               models_url, sizeof(models_url)))
+      return;
+
+   api_key_hash = openai_hash_string(settings->arrays.ai_service_api_key);
+   source_changed =
+         !string_is_equal(openai_model_options_source, models_url)
+         || openai_model_options_key_hash != api_key_hash;
+   now = time(NULL);
+   if (openai_models_loading && !source_changed)
+      return;
+   if (!source_changed
+         && openai_models_last_refresh != 0
+         && now - openai_models_last_refresh < OPENAI_MODEL_REFRESH_SECONDS)
+      return;
+
+   if (source_changed)
+   {
+      openai_model_options[0] = '\0';
+      openai_update_model_setting_values(
+            settings->arrays.ai_service_model);
+      strlcpy(openai_model_options_source, models_url,
+            sizeof(openai_model_options_source));
+      openai_model_options_key_hash = api_key_hash;
+   }
+
+   if (settings->arrays.ai_service_api_key[0])
+   {
+      snprintf(headers, sizeof(headers), "Authorization: Bearer %s\r\n",
+            settings->arrays.ai_service_api_key);
+      header_ptr = headers;
+   }
+
+   if (!(ctx = (openai_models_ctx_t*)malloc(sizeof(*ctx))))
+      return;
+   if (++openai_models_request_id == 0)
+      ++openai_models_request_id;
+   ctx->request_id             = openai_models_request_id;
+   openai_models_loading      = true;
+   openai_models_last_refresh = now;
+   http_task = task_push_http_transfer_with_headers(models_url, true,
+         "GET", header_ptr, openai_models_cb, ctx);
+   if (!http_task)
+   {
+      openai_models_loading = false;
+      free(ctx);
+   }
+}
+
+static void openai_make_signature(const uint8_t *image,
+      unsigned width, unsigned height,
+      uint8_t signature[OPENAI_SIGNATURE_PIXELS])
+{
+   unsigned y;
+   for (y = 0; y < OPENAI_SIGNATURE_HEIGHT; y++)
+   {
+      unsigned y_start = (unsigned)(((uint64_t)y * height)
+            / OPENAI_SIGNATURE_HEIGHT);
+      unsigned y_end   = (unsigned)(((uint64_t)(y + 1) * height)
+            / OPENAI_SIGNATURE_HEIGHT);
+      unsigned x;
+
+      if (y_end <= y_start)
+         y_end = y_start + 1;
+      if (y_end > height)
+         y_end = height;
+
+      for (x = 0; x < OPENAI_SIGNATURE_WIDTH; x++)
+      {
+         unsigned x_start = (unsigned)(((uint64_t)x * width)
+               / OPENAI_SIGNATURE_WIDTH);
+         unsigned x_end   = (unsigned)(((uint64_t)(x + 1) * width)
+               / OPENAI_SIGNATURE_WIDTH);
+         uint64_t luminance = 0;
+         uint64_t samples   = 0;
+         unsigned sample_y;
+
+         if (x_end <= x_start)
+            x_end = x_start + 1;
+         if (x_end > width)
+            x_end = width;
+
+         for (sample_y = y_start; sample_y < y_end; sample_y++)
+         {
+            unsigned sample_x;
+            for (sample_x = x_start; sample_x < x_end; sample_x++)
+            {
+               const uint8_t *pixel = image
+                     + ((size_t)sample_y * width + sample_x) * 3;
+               luminance += (pixel[0] * 29 + pixel[1] * 150
+                     + pixel[2] * 77) >> 8;
+               samples++;
+            }
+         }
+         signature[y * OPENAI_SIGNATURE_WIDTH + x] =
+               samples ? (uint8_t)(luminance / samples) : 0;
+      }
+   }
+}
+
+static bool openai_signatures_match(
+      const uint8_t a[OPENAI_SIGNATURE_PIXELS],
+      const uint8_t b[OPENAI_SIGNATURE_PIXELS])
+{
+   uint64_t total = 0;
+   unsigned changed = 0;
+   unsigned max_delta = 0;
+   unsigned i;
+   for (i = 0; i < OPENAI_SIGNATURE_PIXELS; i++)
+   {
+      unsigned delta = a[i] > b[i] ? a[i] - b[i] : b[i] - a[i];
+      total += delta;
+      if (delta >= 4)
+         changed++;
+      if (delta > max_delta)
+         max_delta = delta;
+   }
+   return total / OPENAI_SIGNATURE_PIXELS <= 1
+         && changed == 0
+         && max_delta <= 3;
+}
+
+static char *openai_find_string_value(const char *data, size_t data_len,
+      const char *wanted_key)
+{
+   rjson_t *json;
+   enum rjson_type type;
+   char *result = NULL;
+
+   if (!(json = rjson_open_buffer(data, data_len)))
+      return NULL;
+
+   while ((type = rjson_next(json)) != RJSON_DONE && type != RJSON_ERROR)
+   {
+      const char *key;
+      if (type != RJSON_STRING
+            || rjson_get_context_type(json) != RJSON_OBJECT
+            || (rjson_get_context_count(json) & 1) != 1)
+         continue;
+      key = rjson_get_string(json, NULL);
+      if (!string_is_equal(key, wanted_key))
+         continue;
+      if (rjson_next(json) == RJSON_STRING)
+      {
+         const char *value = rjson_get_string(json, NULL);
+         if (value)
+            result = strdup(value);
+         break;
+      }
+   }
+
+   rjson_free(json);
+   return result;
+}
+
+static void openai_trim_text(char *text)
+{
+   char *start;
+   size_t len;
+
+   if (!text)
+      return;
+   start = text;
+   while (*start && isspace((unsigned char)*start))
+      start++;
+   if (start != text)
+      memmove(text, start, strlen(start) + 1);
+   len = strlen(text);
+   while (len > 0 && isspace((unsigned char)text[len - 1]))
+      text[--len] = '\0';
+}
+
+static void openai_store_last_result(const openai_translate_ctx_t *ctx,
+      const char *text)
+{
+   if (!ctx)
+      return;
+   memcpy(openai_last_signature, ctx->signature,
+         sizeof(openai_last_signature));
+   strlcpy(openai_last_context, ctx->context,
+         sizeof(openai_last_context));
+   utf8cpy(openai_last_text, sizeof(openai_last_text),
+         text ? text : "", sizeof(openai_last_text) - 1);
+   openai_last_config_generation  = ctx->config_generation;
+   openai_last_config_fingerprint = ctx->config_fingerprint;
+   openai_last_text_refresh = text
+         ? cpu_features_get_time_usec() : 0;
+   openai_last_signature_valid = true;
+}
+
+static void openai_translation_cb(retro_task_t *task, void *task_data,
+      void *user_data, const char *error)
+{
+   http_transfer_data_t *data = (http_transfer_data_t*)task_data;
+   openai_translate_ctx_t *ctx = (openai_translate_ctx_t*)user_data;
+   settings_t *settings       = config_get_ptr();
+   translation_response_t response;
+   char status_error[96];
+   bool service_active;
+   bool request_current;
+   bool config_current;
+   (void)task;
+
+   service_active = settings
+         && settings->bools.ai_service_enable
+         && string_is_equal(settings->arrays.ai_service_backend, "openai");
+   request_current = ctx
+         && ctx->request_id == openai_latest_request_id;
+   config_current = ctx && service_active
+         && ctx->config_generation == ai_service_config_generation
+         && ctx->config_fingerprint
+               == ai_service_request_config_fingerprint(settings);
+
+   if (!ctx || !request_current || !config_current)
+   {
+      /* A menu/config change may invalidate the sole in-flight request while
+       * auto translation is active. Feed an empty successful cycle back only
+       * when this is still the newest request; the response handler will
+       * schedule a fresh capture for auto mode, while one-shot mode stays
+       * silent. A genuinely newer request must never create a second loop. */
+      if (ctx && request_current && service_active && ctx->callback)
+      {
+         memset(&response, 0, sizeof(response));
+         response.auto_translate = true;
+         response.show_text       = true;
+         ctx->callback(&response, ctx->userdata);
+      }
+      if (ctx)
+         free(ctx);
+      return;
+   }
+
+   memset(&response, 0, sizeof(response));
+   response.auto_translate = true;
+   response.show_text       = true;
+
+   if (error)
+      response.error = strdup(error);
+   else if (!data || !data->data)
+      response.error = strdup("OpenAI-compatible endpoint returned no data.");
+   else if (data->status < 200 || data->status >= 300)
+   {
+      response.error = openai_find_string_value(data->data, data->len, "message");
+      if (!response.error)
+      {
+         snprintf(status_error, sizeof(status_error),
+               "OpenAI-compatible endpoint returned HTTP %d.", data->status);
+         response.error = strdup(status_error);
+      }
+   }
+   else
+   {
+      response.text = openai_find_string_value(data->data, data->len, "content");
+      openai_trim_text(response.text);
+      if (!response.text || !*response.text)
+         response.error = strdup("OpenAI-compatible endpoint returned no translation.");
+      else if (string_is_equal(response.text, "NO_TEXT"))
+      {
+         free(response.text);
+         response.text  = NULL;
+         response.error = strdup("No text found.");
+         openai_store_last_result(ctx, NULL);
+      }
+      else if (ctx)
+         openai_store_last_result(ctx, response.text);
+   }
+
+   if (response.error && !string_is_equal(response.error, "No text found."))
+      response.auto_translate = false;
+
+   if (ctx && ctx->callback)
+      ctx->callback(&response, ctx->userdata);
+
+   if (response.text)
+      free(response.text);
+   if (response.error)
+      free(response.error);
+   if (ctx)
+      free(ctx);
+}
+
+static bool openai_emit_local_response(translation_response_cb_t callback,
+      void *userdata, const char *text, const char *error, bool auto_translate)
+{
+   translation_response_t response;
+   memset(&response, 0, sizeof(response));
+   response.text           = (char*)text;
+   response.error          = (char*)error;
+   response.auto_translate = auto_translate;
+   if (callback)
+      callback(&response, userdata);
+   return true;
+}
+
+static void openai_unchanged_task_handler(retro_task_t *task)
+{
+   task_set_flags(task, RETRO_TASK_FLG_FINISHED, true);
+}
+
+static void openai_unchanged_task_cb(retro_task_t *task, void *task_data,
+      void *user_data, const char *error)
+{
+   openai_unchanged_ctx_t *ctx =
+         (openai_unchanged_ctx_t*)user_data;
+   uint8_t flags = task_get_flags(task);
+   (void)task_data;
+   (void)error;
+
+   if (ctx && !(flags & RETRO_TASK_FLG_CANCELLED) && ctx->callback)
+   {
+      settings_t *settings = config_get_ptr();
+      bool service_active = settings
+          && settings->bools.ai_service_enable
+          && string_is_equal(settings->arrays.ai_service_backend, "openai");
+
+      if (ctx->request_id == openai_latest_request_id && service_active)
+      {
+         translation_response_t response;
+         retro_time_t now = cpu_features_get_time_usec();
+         bool config_current =
+               ctx->config_generation == ai_service_config_generation
+               && ctx->config_fingerprint
+                     == ai_service_request_config_fingerprint(settings);
+
+         memset(&response, 0, sizeof(response));
+         response.auto_translate = true;
+         response.show_text       = true;
+         if (   config_current
+             && openai_last_text[0]
+             && (   openai_last_text_refresh == 0
+                 || now - openai_last_text_refresh
+                       >= OPENAI_TEXT_REFRESH_USEC))
+         {
+            response.text = openai_last_text;
+            response.text_refresh = true;
+            openai_last_text_refresh = now;
+         }
+         ctx->callback(&response, ctx->userdata);
+      }
+   }
+}
+
+static void openai_unchanged_task_cleanup(retro_task_t *task)
+{
+   if (task->user_data)
+      free(task->user_data);
+   task->user_data = NULL;
+}
+
+static bool openai_schedule_unchanged_poll(
+      translation_response_cb_t callback, void *userdata,
+      uint64_t request_id, uint64_t config_fingerprint)
+{
+   retro_task_t *task;
+   openai_unchanged_ctx_t *ctx;
+
+   if (!(task = task_init()))
+      return false;
+   if (!(ctx = (openai_unchanged_ctx_t*)malloc(sizeof(*ctx))))
+   {
+      free(task);
+      return false;
+   }
+
+   ctx->callback  = callback;
+   ctx->userdata  = userdata;
+   ctx->request_id = request_id;
+   ctx->config_generation  = ai_service_config_generation;
+   ctx->config_fingerprint = config_fingerprint;
+   task->handler  = openai_unchanged_task_handler;
+   task->callback = openai_unchanged_task_cb;
+   task->cleanup  = openai_unchanged_task_cleanup;
+   task->user_data = ctx;
+   task->when     = cpu_features_get_time_usec()
+         + OPENAI_UNCHANGED_POLL_USEC;
+   task->flags   |= RETRO_TASK_FLG_MUTE;
+   task_queue_push(task);
+   return true;
+}
+
+static bool openai_translate(
+      const uint8_t *bit24_image,
+      unsigned width,
+      unsigned height,
+      const char *source_lang,
+      const char *target_lang,
+      unsigned mode,
+      const char *sys_lbl,
+      bool paused,
+      translation_response_cb_t callback,
+      void *userdata)
+{
+   uint8_t signature[OPENAI_SIGNATURE_PIXELS];
+   const uint8_t *png_image         = bit24_image;
+   uint8_t *scaled_image            = NULL;
+   unsigned png_width               = width;
+   unsigned png_height              = height;
+   uint8_t *png_buffer             = NULL;
+   uint64_t png_size               = 0;
+   char *png64                     = NULL;
+   char *data_uri                  = NULL;
+   int png64_len                   = 0;
+   rjsonwriter_t *writer           = NULL;
+   char *json_buffer               = NULL;
+   int json_len                    = 0;
+   char endpoint[PATH_MAX_LENGTH];
+   char headers[640];
+   const char *header_ptr          = NULL;
+   char system_prompt[OPENAI_CONTEXT_SIZE];
+   char context[OPENAI_CONTEXT_SIZE];
+   openai_translate_ctx_t *ctx     = NULL;
+   settings_t *settings            = config_get_ptr();
+   access_state_t *access_st       = access_state_get_ptr();
+   void *http_task                 = NULL;
+   bool success                    = false;
+   uint64_t request_id;
+   uint64_t config_fingerprint;
+   static const char data_prefix[] = "data:image/png;base64,";
+   static const char request_middle[] =
+         ",\"stream\":false,\"messages\":[{\"role\":\"system\","
+         "\"content\":";
+   static const char request_image[] =
+         "},{\"role\":\"user\",\"content\":[{\"type\":\"text\","
+         "\"text\":\"Translate the game text in this frame.\"},"
+         "{\"type\":\"image_url\",\"image_url\":{\"url\":";
+   static const char request_end[] =
+         ",\"detail\":\"low\"}}]}]}";
+   (void)mode;
+   (void)paused;
+
+   if (   !settings || !settings->bools.ai_service_enable
+       || !bit24_image || width == 0 || height == 0)
+      return false;
+   request_id = openai_next_request_id();
+   config_fingerprint = ai_service_request_config_fingerprint(settings);
+   if (!settings->arrays.ai_service_model[0])
+      return openai_emit_local_response(callback, userdata, NULL,
+            "Select an AI translation model in Settings > AI Service.", false);
+   if (!openai_build_api_url(settings->arrays.ai_service_url, false,
+            endpoint, sizeof(endpoint)))
+      return openai_emit_local_response(callback, userdata, NULL,
+            "Set a valid OpenAI-compatible endpoint in AI Service URL.", false);
+
+   openai_make_signature(bit24_image, width, height, signature);
+   snprintf(context, sizeof(context), "%s|%s|key:%08x|%s|%s|%s",
+         endpoint,
+         settings->arrays.ai_service_model,
+         (unsigned)openai_hash_string(settings->arrays.ai_service_api_key),
+         source_lang ? source_lang : "auto",
+         target_lang ? target_lang : "en",
+         sys_lbl ? sys_lbl : "unknown game");
+
+   if (access_st->ai_service_auto == 2
+         && openai_last_signature_valid
+         && openai_last_config_generation == ai_service_config_generation
+         && openai_last_config_fingerprint == config_fingerprint
+         && string_is_equal(context, openai_last_context)
+         && openai_signatures_match(signature,
+               openai_last_signature))
+      return openai_schedule_unchanged_poll(
+            callback, userdata, request_id, config_fingerprint);
+
+   if (width > OPENAI_IMAGE_MAX_DIMENSION
+         || height > OPENAI_IMAGE_MAX_DIMENSION)
+   {
+      unsigned y;
+      if (width >= height)
+      {
+         png_width  = OPENAI_IMAGE_MAX_DIMENSION;
+         png_height = (unsigned)(((uint64_t)height * png_width) / width);
+      }
+      else
+      {
+         png_height = OPENAI_IMAGE_MAX_DIMENSION;
+         png_width  = (unsigned)(((uint64_t)width * png_height) / height);
+      }
+      if (png_width == 0)
+         png_width = 1;
+      if (png_height == 0)
+         png_height = 1;
+
+      if (!(scaled_image = (uint8_t*)malloc(
+                  (size_t)png_width * png_height * 3)))
+         goto finish;
+
+      for (y = 0; y < png_height; y++)
+      {
+         unsigned x;
+         unsigned source_y = (unsigned)(((uint64_t)y * height)
+               / png_height);
+         for (x = 0; x < png_width; x++)
+         {
+            unsigned source_x = (unsigned)(((uint64_t)x * width)
+                  / png_width);
+            memcpy(scaled_image + ((size_t)y * png_width + x) * 3,
+                  bit24_image + ((size_t)source_y * width + source_x) * 3,
+                  3);
+         }
+      }
+      png_image = scaled_image;
+   }
+
+#ifdef HAVE_RPNG
+   png_buffer = rpng_save_image_bgr24_string(
+         png_image + png_width * (png_height - 1) * 3,
+         png_width, png_height, (signed)-(png_width * 3), &png_size);
+#endif
+   if (!png_buffer || png_size == 0 || png_size > INT_MAX)
+      goto finish;
+   if (!(png64 = base64(png_buffer, (int)png_size, &png64_len)))
+      goto finish;
+   if (!(data_uri = (char*)malloc(sizeof(data_prefix) + (size_t)png64_len)))
+      goto finish;
+   memcpy(data_uri, data_prefix, sizeof(data_prefix) - 1);
+   memcpy(data_uri + sizeof(data_prefix) - 1, png64, (size_t)png64_len);
+   data_uri[sizeof(data_prefix) - 1 + (size_t)png64_len] = '\0';
+
+   snprintf(system_prompt, sizeof(system_prompt),
+         "Translate every visible video-game dialogue or UI string from %s "
+         "to %s. Game context: %s. Use your knowledge of this game for "
+         "official character, item, place, and terminology names. Preserve "
+         "speaker tone and line breaks. Return only the translated text, "
+         "with no explanation or markdown. If there is no translatable text, "
+         "return exactly NO_TEXT.",
+         source_lang ? source_lang : "the automatically detected language",
+         target_lang ? target_lang : "English",
+         sys_lbl ? sys_lbl : "unknown game");
+
+   if (!(writer = rjsonwriter_open_memory()))
+      goto finish;
+
+   rjsonwriter_raw(writer, "{", 1);
+   rjsonwriter_add_string(writer, "model");
+   rjsonwriter_raw(writer, ":", 1);
+   rjsonwriter_add_string(writer, settings->arrays.ai_service_model);
+   rjsonwriter_raw(writer, request_middle, sizeof(request_middle) - 1);
+   rjsonwriter_add_string(writer, system_prompt);
+   rjsonwriter_raw(writer, request_image, sizeof(request_image) - 1);
+   rjsonwriter_add_string(writer, data_uri);
+   rjsonwriter_raw(writer, request_end, sizeof(request_end) - 1);
+
+   json_buffer = rjsonwriter_get_memory_buffer(writer, &json_len);
+   if (!json_buffer || json_len <= 0)
+      goto finish;
+
+   if (settings->arrays.ai_service_api_key[0])
+   {
+      snprintf(headers, sizeof(headers), "Authorization: Bearer %s\r\n",
+            settings->arrays.ai_service_api_key);
+      header_ptr = headers;
+   }
+
+   if (!(ctx = (openai_translate_ctx_t*)calloc(1, sizeof(*ctx))))
+      goto finish;
+   ctx->callback = callback;
+   ctx->userdata = userdata;
+   ctx->request_id = request_id;
+   ctx->config_generation  = ai_service_config_generation;
+   ctx->config_fingerprint = config_fingerprint;
+   memcpy(ctx->signature, signature, sizeof(ctx->signature));
+   strlcpy(ctx->context, context, sizeof(ctx->context));
+
+   http_task = task_push_http_transfer_with_content(endpoint, "POST",
+         json_buffer, (size_t)json_len, "application/json",
+         true, true, header_ptr, openai_translation_cb, ctx);
+   if (!http_task)
+      goto finish;
+
+   ctx     = NULL; /* HTTP task owns it. */
+   success = true;
+
+finish:
+   if (ctx)
+      free(ctx);
+   if (writer)
+      rjsonwriter_free(writer);
+   if (data_uri)
+      free(data_uri);
+   if (png64)
+      free(png64);
+   if (png_buffer)
+      free(png_buffer);
+   if (scaled_image)
+      free(scaled_image);
+   if (!success)
+      return openai_emit_local_response(callback, userdata, NULL,
+            "Could not prepare or send the AI translation request.", false);
    return success;
 }
 
@@ -1492,12 +2653,19 @@ void apple_translate_log(const char *message)
    RARCH_LOG("%s\n", message);
 }
 
-/* Context for async Apple translation callback */
-static struct
+/* Context for each async Apple translation callback. Requests may overlap, so
+ * this must not be a single shared callback/userdata slot. */
+typedef struct
 {
    translation_response_cb_t callback;
    void *userdata;
-} apple_translate_ctx;
+   uint64_t request_id;
+   uint64_t config_generation;
+   uint64_t config_fingerprint;
+   char backend[32];
+} apple_translate_ctx_t;
+
+static uint64_t apple_latest_request_id;
 
 /* Callback for async Apple translation */
 static void handle_apple_translation_cb(
@@ -1509,6 +2677,34 @@ static void handle_apple_translation_cb(
       const char *error,
       void *userdata)
 {
+   apple_translate_ctx_t *ctx = (apple_translate_ctx_t*)userdata;
+   settings_t *settings       = config_get_ptr();
+   access_state_t *access_st  = access_state_get_ptr();
+   bool service_active        = ctx && settings
+         && settings->bools.ai_service_enable
+         && string_is_equal(settings->arrays.ai_service_backend,
+               ctx->backend);
+   bool request_current       = ctx
+         && ctx->request_id == apple_latest_request_id;
+   bool config_current        = service_active
+         && ctx->config_generation == ai_service_config_generation
+         && ctx->config_fingerprint
+               == ai_service_request_config_fingerprint(settings);
+
+   if (!ctx || !request_current || !config_current)
+   {
+      if (   ctx && request_current && service_active && ctx->callback
+          && access_st->ai_service_auto != 0)
+      {
+         translation_response_t response;
+         memset(&response, 0, sizeof(response));
+         response.auto_translate = true;
+         response.show_text       = true;
+         ctx->callback(&response, ctx->userdata);
+      }
+      goto finish;
+   }
+
    if (text || image_data || sound_data)
    {
       translation_response_t response;
@@ -1519,18 +2715,22 @@ static void handle_apple_translation_cb(
       response.sound_data    = sound_data;
       response.sound_size    = sound_size;
       response.auto_translate = true;
-      if (apple_translate_ctx.callback)
-         apple_translate_ctx.callback(&response, apple_translate_ctx.userdata);
-      if (text)
-         apple_translate_free_string(text);
-      if (image_data)
-         apple_translate_free_data(image_data);
-      if (sound_data)
-         apple_translate_free_data(sound_data);
+      if (ctx->callback)
+         ctx->callback(&response, ctx->userdata);
    }
    else
       RARCH_ERR("[Translation] Apple translation failed: %s\n",
             error ? error : "unknown error");
+
+finish:
+   if (text)
+      apple_translate_free_string(text);
+   if (image_data)
+      apple_translate_free_data(image_data);
+   if (sound_data)
+      apple_translate_free_data(sound_data);
+   if (ctx)
+      free(ctx);
 }
 
 static bool apple_translate(
@@ -1545,18 +2745,33 @@ static bool apple_translate(
       translation_response_cb_t callback,
       void *userdata)
 {
+   apple_translate_ctx_t *ctx;
+   settings_t *settings = config_get_ptr();
    (void)game_label;
    (void)paused;
 
-   apple_translate_ctx.callback = callback;
-   apple_translate_ctx.userdata = userdata;
+   if (!settings || !settings->bools.ai_service_enable
+         || !bgr24_data || width == 0 || height == 0)
+      return false;
+   if (!(ctx = (apple_translate_ctx_t*)malloc(sizeof(*ctx))))
+      return false;
+   if (++apple_latest_request_id == 0)
+      ++apple_latest_request_id;
+
+   ctx->callback           = callback;
+   ctx->userdata           = userdata;
+   ctx->request_id         = apple_latest_request_id;
+   ctx->config_generation  = ai_service_config_generation;
+   ctx->config_fingerprint = ai_service_request_config_fingerprint(settings);
+   strlcpy(ctx->backend, settings->arrays.ai_service_backend,
+         sizeof(ctx->backend));
 
    /* Async: callback will be invoked on main thread when done */
    apple_translate_image(
          bgr24_data, width, height, width * 3,
          source_lang, target_lang,
          mode,
-         handle_apple_translation_cb, NULL);
+         handle_apple_translation_cb, ctx);
 
    return true;
 }

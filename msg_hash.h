@@ -25079,6 +25079,8 @@ enum msg_hash_enums
 #undef SETTINGS_DEF_ENUM_PASS
    MENU_LABEL(AI_SERVICE_BACKEND),
    MENU_LABEL(AI_SERVICE_URL),
+   MENU_LABEL(AI_SERVICE_MODEL),
+   MENU_LABEL(AI_SERVICE_API_KEY),
    /* GENERATED REGION: AI service options group enum rows (see settings/settings_def_ai_service_options.h). */
 #define SETTINGS_DEF_ENUM_PASS
 #define SETTINGS_DEF_STRINGS_PASS

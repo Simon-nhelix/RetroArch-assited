@@ -3548,6 +3548,10 @@ bool command_event(enum event_command cmd, void *data)
          }
          break;
       case CMD_EVENT_LOAD_CORE:
+#ifdef HAVE_TRANSLATE
+         access_st->ai_service_auto = 0;
+         ai_service_invalidate_translation();
+#endif
          runloop_st->subsystem_current_count = 0;
          content_clear_subsystem();
 #ifdef HAVE_DYNAMIC
@@ -3843,6 +3847,11 @@ bool command_event(enum event_command cmd, void *data)
             rarch_system_info_t *sys_info   = &runloop_st->system;
             uint8_t flags                   = content_get_flags();
 
+#ifdef HAVE_TRANSLATE
+            access_st->ai_service_auto = 0;
+            ai_service_invalidate_translation();
+#endif
+
             runloop_st->flags              &= ~RUNLOOP_FLAG_CORE_RUNNING;
 
             /* The platform that uses ram_state_save calls it when the content
@@ -3960,6 +3969,10 @@ bool command_event(enum event_command cmd, void *data)
 #endif
          break;
       case CMD_EVENT_CLOSE_CONTENT:
+#ifdef HAVE_TRANSLATE
+         access_st->ai_service_auto = 0;
+         ai_service_invalidate_translation();
+#endif
 #ifdef HAVE_MENU
          /* If we need to quit, skip unloading the core to avoid performing
           * cleanup actions (like writing autosave state) twice. */
@@ -4531,6 +4544,11 @@ bool command_event(enum event_command cmd, void *data)
             video_driver_state_t
                *video_st                         = video_state_get_ptr();
             rarch_system_info_t *sys_info        = &runloop_st->system;
+
+#ifdef HAVE_TRANSLATE
+            access_st->ai_service_auto = 0;
+            ai_service_invalidate_translation();
+#endif
             
             /* Restore unpaused state. The recursive command_event call
              * here re-enters this dispatcher; the UNPAUSE branch is

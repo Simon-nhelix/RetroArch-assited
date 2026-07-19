@@ -101,6 +101,7 @@
 #endif
 
 #include "../configuration.h"
+#include "../accessibility.h"
 #include "../file_path_special.h"
 #include "../defaults.h"
 #include "../verbosity.h"
@@ -8646,21 +8647,35 @@ unsigned menu_displaylist_build_list(
       case DISPLAYLIST_AI_SERVICE_SETTINGS_LIST:
          {
             bool ai_service_enable         = settings->bools.ai_service_enable;
+            bool ai_service_openai         = string_is_equal(
+                  settings->arrays.ai_service_backend, "openai");
 
             static menu_displaylist_build_info_selective_t build_list[] = {
                {MENU_ENUM_LABEL_AI_SERVICE_ENABLE,        PARSE_ONLY_BOOL,   true},
                {MENU_ENUM_LABEL_AI_SERVICE_MODE,          PARSE_ONLY_UINT,   false},
-               {MENU_ENUM_LABEL_AI_SERVICE_URL,           PARSE_ONLY_STRING, false},
                {MENU_ENUM_LABEL_AI_SERVICE_BACKEND,       PARSE_ONLY_STRING_OPTIONS, false},
-               {MENU_ENUM_LABEL_AI_SERVICE_PAUSE,         PARSE_ONLY_BOOL,   false},
-               {MENU_ENUM_LABEL_AI_SERVICE_SOURCE_LANG,   PARSE_ONLY_UINT,   false},
+               {MENU_ENUM_LABEL_AI_SERVICE_URL,           PARSE_ONLY_STRING, false},
+               {MENU_ENUM_LABEL_AI_SERVICE_MODEL,         PARSE_ONLY_STRING_OPTIONS, false},
+               {MENU_ENUM_LABEL_AI_SERVICE_API_KEY,       PARSE_ONLY_STRING, false},
                {MENU_ENUM_LABEL_AI_SERVICE_TARGET_LANG,   PARSE_ONLY_UINT,   false},
+               {MENU_ENUM_LABEL_AI_SERVICE_SOURCE_LANG,   PARSE_ONLY_UINT,   false},
+               {MENU_ENUM_LABEL_AI_SERVICE_PAUSE,         PARSE_ONLY_BOOL,   false},
             };
+
+#ifdef HAVE_TRANSLATE
+            if (ai_service_enable && ai_service_openai)
+               ai_service_refresh_models();
+#endif
 
             for (i = 0; i < ARRAY_SIZE(build_list); i++)
             {
                switch (build_list[i].enum_idx)
                {
+                  case MENU_ENUM_LABEL_AI_SERVICE_MODEL:
+                  case MENU_ENUM_LABEL_AI_SERVICE_API_KEY:
+                     build_list[i].checked =
+                           ai_service_enable && ai_service_openai;
+                     break;
                   case MENU_ENUM_LABEL_AI_SERVICE_MODE:
                   case MENU_ENUM_LABEL_AI_SERVICE_BACKEND:
                   case MENU_ENUM_LABEL_AI_SERVICE_URL:

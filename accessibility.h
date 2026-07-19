@@ -96,6 +96,24 @@ const char *config_get_ai_service_backend_options(void);
  **/
 const char *config_get_default_ai_service_backend(void);
 
+/**
+ * config_get_ai_service_model_options:
+ *
+ * Get the cached OpenAI-compatible model identifiers separated by '|'.
+ **/
+const char *config_get_ai_service_model_options(void);
+
+/**
+ * ai_service_refresh_models:
+ *
+ * Refresh the model cache from the configured OpenAI-compatible endpoint.
+ **/
+void ai_service_refresh_models(void);
+
+/* Invalidates pending AI translation responses and cached frame/text state
+ * after a user-visible AI Service configuration change. */
+void ai_service_invalidate_translation(void);
+
 bool accessibility_speak_priority(
       bool accessibility_enable,
       unsigned accessibility_narrator_speech_speed,

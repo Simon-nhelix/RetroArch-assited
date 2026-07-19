@@ -19420,7 +19420,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_AI_SERVICE_BACKEND,
-   "Select which translation backend to use. HTTP uses a remote server at the configured URL. Apple uses on-device OCR and translation (macOS/iOS)."
+   "Select the translation backend. HTTP uses the existing image translation API. OpenAI connects directly to an OpenAI-compatible /v1 API such as local CLIProxy or OpenRouter. Apple uses on-device OCR and translation (macOS/iOS)."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_AI_SERVICE_URL,
@@ -19428,7 +19428,31 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_AI_SERVICE_URL,
-   "An http:// URL pointing to the translation service to use."
+   "Translation service URL. For OpenAI, enter a local CLIProxy base URL such as http://127.0.0.1:8317/v1 or https://openrouter.ai/api/v1."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_AI_SERVICE_MODEL,
+   "ai_service_model"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AI_SERVICE_MODEL,
+   "Model"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_AI_SERVICE_MODEL,
+   "Select a translation model, or enter a model identifier directly."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_AI_SERVICE_API_KEY,
+   "ai_service_api_key"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AI_SERVICE_API_KEY,
+   "API Key"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_AI_SERVICE_API_KEY,
+   "Optional API key for an OpenAI-compatible service. Leave blank when a local proxy does not require one."
    )
 /* GENERATED REGION: AI service options group (see settings_def_ai_service_options.h). */
 #define SETTINGS_DEF_STRINGS_PASS

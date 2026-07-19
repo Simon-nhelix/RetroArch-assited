@@ -23,6 +23,13 @@
 
 #define GENERIC_MESSAGE_FADE_DURATION MSG_QUEUE_ANIMATION_DURATION
 
+#ifdef HAVE_TRANSLATE
+#define AI_SERVICE_MESSAGE_SIZE      16384
+#define AI_SERVICE_MESSAGE_MAX_LINES 8
+#define AI_SERVICE_WRAPPED_MESSAGE_SIZE \
+      (AI_SERVICE_MESSAGE_SIZE + AI_SERVICE_MESSAGE_MAX_LINES + 4)
+#endif
+
 /* Widget state */
 
 enum gfx_widget_generic_message_status
@@ -69,6 +76,36 @@ struct gfx_widget_generic_message_state
 
 typedef struct gfx_widget_generic_message_state gfx_widget_generic_message_state_t;
 
+#ifdef HAVE_TRANSLATE
+struct gfx_widget_ai_service_message_state
+{
+   unsigned bg_width;
+   unsigned bg_height;
+   unsigned frame_width;
+   unsigned text_padding;
+   unsigned text_color;
+   unsigned line_count;
+   unsigned message_duration;
+
+   float timer;
+   float bg_x;
+   float bg_y;
+   float text_x;
+   float text_y;
+
+   size_t message_len;
+   size_t wrapped_len;
+
+   char message[AI_SERVICE_MESSAGE_SIZE];
+   char wrapped[AI_SERVICE_WRAPPED_MESSAGE_SIZE];
+   bool visible;
+   bool message_updated;
+};
+
+typedef struct gfx_widget_ai_service_message_state
+      gfx_widget_ai_service_message_state_t;
+#endif
+
 static gfx_widget_generic_message_state_t p_w_generic_message_st = {
 
    0,                                  /* bg_min_width */
@@ -102,7 +139,67 @@ static gfx_widget_generic_message_state_t p_w_generic_message_st = {
    false                               /* message_updated */
 };
 
+#ifdef HAVE_TRANSLATE
+static gfx_widget_ai_service_message_state_t p_w_ai_service_message_st = {
+   0
+};
+#endif
+
 /* Utilities */
+
+/* strlcpy() returns the source length, which is not safe to pass as a
+ * destination-buffer length when truncation occurred. Keep the actual copied
+ * length and, when possible, avoid leaving a partial UTF-8 sequence at the
+ * end of the bounded destination. Invalid input remains bounded and NUL
+ * terminated; callers are still responsible for supplying a C string. */
+static size_t gfx_widget_copy_message(
+      char *dst, size_t dst_size, const char *src)
+{
+   size_t src_len;
+   size_t copied;
+
+   if (!dst || dst_size == 0)
+      return 0;
+   if (!src)
+   {
+      dst[0] = '\0';
+      return 0;
+   }
+
+   src_len = strlcpy(dst, src, dst_size);
+   copied  = src_len < dst_size ? src_len : dst_size - 1;
+
+   if (src_len >= dst_size && copied > 0)
+   {
+      size_t sequence_start = copied - 1;
+      size_t sequence_len;
+      unsigned char lead;
+
+      while (sequence_start > 0
+            && (((unsigned char)dst[sequence_start] & 0xC0) == 0x80))
+         sequence_start--;
+
+      lead = (unsigned char)dst[sequence_start];
+      if (lead < 0x80)
+         sequence_len = 1;
+      else if (lead >= 0xC2 && lead <= 0xDF)
+         sequence_len = 2;
+      else if (lead >= 0xE0 && lead <= 0xEF)
+         sequence_len = 3;
+      else if (lead >= 0xF0 && lead <= 0xF4)
+         sequence_len = 4;
+      else
+         sequence_len = 1;
+
+      if (copied - sequence_start < sequence_len)
+      {
+         dst[sequence_start] = '\0';
+         copied              = sequence_start;
+      }
+   }
+
+   return copied;
+}
 
 static void gfx_widget_generic_message_reset(bool cancel_pending)
 {
@@ -119,6 +216,268 @@ static void gfx_widget_generic_message_reset(bool cancel_pending)
    if (cancel_pending)
       state->message_updated = false;
 }
+
+#ifdef HAVE_TRANSLATE
+static void gfx_widget_ai_service_message_reset(bool cancel_pending)
+{
+   gfx_widget_ai_service_message_state_t *state =
+         &p_w_ai_service_message_st;
+   uintptr_t timer_tag = (uintptr_t)&state->timer;
+
+   gfx_animation_kill_by_tag(&timer_tag);
+   state->visible = false;
+
+   if (cancel_pending)
+   {
+      state->message_updated = false;
+      state->message[0]      = '\0';
+      state->wrapped[0]      = '\0';
+      state->message_len     = 0;
+      state->wrapped_len     = 0;
+   }
+}
+
+static void gfx_widget_ai_service_message_expired_cb(void *userdata)
+{
+   (void)userdata;
+   p_w_ai_service_message_st.visible = false;
+}
+
+static size_t gfx_widget_ai_service_utf8_sequence_len(
+      const unsigned char *text, size_t remaining)
+{
+   unsigned char lead;
+
+   if (!text || remaining == 0)
+      return 0;
+
+   lead = text[0];
+   if (lead < 0x80)
+      return 1;
+   if (lead >= 0xC2 && lead <= 0xDF)
+      return remaining >= 2 && (text[1] & 0xC0) == 0x80 ? 2 : 0;
+   if (lead >= 0xE0 && lead <= 0xEF)
+   {
+      if (remaining < 3 || (text[2] & 0xC0) != 0x80)
+         return 0;
+      if (lead == 0xE0)
+         return text[1] >= 0xA0 && text[1] <= 0xBF ? 3 : 0;
+      if (lead == 0xED)
+         return text[1] >= 0x80 && text[1] <= 0x9F ? 3 : 0;
+      return (text[1] & 0xC0) == 0x80 ? 3 : 0;
+   }
+   if (lead >= 0xF0 && lead <= 0xF4)
+   {
+      if (remaining < 4
+            || (text[2] & 0xC0) != 0x80
+            || (text[3] & 0xC0) != 0x80)
+         return 0;
+      if (lead == 0xF0)
+         return text[1] >= 0x90 && text[1] <= 0xBF ? 4 : 0;
+      if (lead == 0xF4)
+         return text[1] >= 0x80 && text[1] <= 0x8F ? 4 : 0;
+      return (text[1] & 0xC0) == 0x80 ? 4 : 0;
+   }
+   return 0;
+}
+
+static void gfx_widget_ai_service_sanitize_utf8(
+      char *text, size_t text_len)
+{
+   size_t offset = 0;
+
+   while (offset < text_len)
+   {
+      size_t sequence_len = gfx_widget_ai_service_utf8_sequence_len(
+            (const unsigned char*)text + offset, text_len - offset);
+      if (sequence_len == 0)
+      {
+         text[offset++] = '?';
+         continue;
+      }
+      offset += sequence_len;
+   }
+}
+
+static void gfx_widget_ai_service_truncate_wrapped(
+      gfx_widget_ai_service_message_state_t *state, char *at)
+{
+   size_t used = (size_t)(at - state->wrapped);
+
+   *at = '\0';
+   if (used + 4 <= sizeof(state->wrapped))
+   {
+      memcpy(state->wrapped + used, "...", 4);
+      used += 3;
+   }
+   state->wrapped_len = used;
+}
+
+/* word_wrap_wideglyph() preserves long ASCII tokens without spaces. Enforce
+ * a hard visible-width limit as a second pass and stop after max_lines, so a
+ * malformed model response cannot make the renderer process thousands of
+ * clipped glyphs on every frame. */
+static unsigned gfx_widget_ai_service_hard_wrap(
+      gfx_widget_ai_service_message_state_t *state,
+      unsigned line_width, unsigned max_lines)
+{
+   char *cursor       = state->wrapped;
+   char *end          = state->wrapped + state->wrapped_len;
+   unsigned lines     = 1;
+   unsigned line_used = 0;
+
+   while (cursor < end && *cursor)
+   {
+      size_t remaining;
+      size_t sequence_len;
+      unsigned glyph_width;
+
+      if (*cursor == '\n')
+      {
+         if (lines >= max_lines)
+         {
+            gfx_widget_ai_service_truncate_wrapped(state, cursor);
+            return lines;
+         }
+         lines++;
+         line_used = 0;
+         cursor++;
+         continue;
+      }
+
+      remaining = (size_t)(end - cursor);
+      sequence_len = gfx_widget_ai_service_utf8_sequence_len(
+            (const unsigned char*)cursor, remaining);
+      if (sequence_len == 0)
+         sequence_len = 1;
+      glyph_width = sequence_len >= 3 ? 2 : 1;
+
+      if (line_used > 0 && line_used + glyph_width > line_width)
+      {
+         size_t offset = (size_t)(cursor - state->wrapped);
+
+         if (lines >= max_lines
+               || state->wrapped_len + 2 > sizeof(state->wrapped))
+         {
+            gfx_widget_ai_service_truncate_wrapped(state, cursor);
+            return lines;
+         }
+
+         memmove(cursor + 1, cursor,
+               state->wrapped_len - offset + 1);
+         *cursor = '\n';
+         state->wrapped_len++;
+         end++;
+         lines++;
+         line_used = 0;
+         cursor++;
+         continue;
+      }
+
+      line_used += glyph_width;
+      cursor    += sequence_len;
+   }
+
+   return lines;
+}
+
+static void gfx_widget_ai_service_message_update_layout(
+      dispgfx_widget_t *p_dispwidget)
+{
+   gfx_widget_ai_service_message_state_t *state =
+         &p_w_ai_service_message_st;
+   gfx_widget_font_data_t *font_msg_queue =
+         &p_dispwidget->gfx_widget_fonts.msg_queue;
+   unsigned video_width  = p_dispwidget->last_video_width;
+   unsigned video_height = p_dispwidget->last_video_height;
+   unsigned max_bg_width;
+   unsigned max_text_width;
+   unsigned max_lines;
+   unsigned line_count;
+   unsigned max_line_width = 0;
+   int line_width;
+   char *line;
+
+   if (!state->message[0] || video_width == 0 || video_height == 0
+         || !font_msg_queue->font || font_msg_queue->line_height <= 0.0f)
+      return;
+
+   state->text_padding = (unsigned)(
+         (font_msg_queue->line_height * (2.0f / 3.0f)) + 0.5f);
+   state->frame_width  = p_dispwidget->divider_width_1px;
+   state->text_color   = TEXT_COLOR_INFO;
+
+   max_bg_width = (unsigned)((float)video_width * 0.92f);
+   if (max_bg_width > video_width)
+      max_bg_width = video_width;
+   if (max_bg_width <= state->text_padding * 2)
+      max_bg_width = video_width;
+   max_text_width = max_bg_width > state->text_padding * 2
+         ? max_bg_width - state->text_padding * 2 : 1;
+
+   line_width = font_msg_queue->glyph_width > 0.0f
+         ? (int)((float)max_text_width / font_msg_queue->glyph_width)
+         : 40;
+   if (line_width < 1)
+      line_width = 1;
+
+   state->wrapped_len = word_wrap_wideglyph(
+         state->wrapped, sizeof(state->wrapped),
+         state->message, state->message_len,
+         line_width, 200, 0);
+   if (state->wrapped_len == 0 && state->message_len > 0)
+      state->wrapped_len = gfx_widget_copy_message(
+            state->wrapped, sizeof(state->wrapped), state->message);
+
+   max_lines = (unsigned)(((float)video_height * 0.42f)
+         / font_msg_queue->line_height);
+   if (max_lines < 1)
+      max_lines = 1;
+   if (max_lines > AI_SERVICE_MESSAGE_MAX_LINES)
+      max_lines = AI_SERVICE_MESSAGE_MAX_LINES;
+
+   line_count = gfx_widget_ai_service_hard_wrap(
+         state, (unsigned)line_width, max_lines);
+   line       = state->wrapped;
+   while (line && *line)
+   {
+      char *newline = strchr(line, '\n');
+      size_t line_len = newline
+            ? (size_t)(newline - line) : strlen(line);
+      int measured_width = font_driver_get_message_width(
+            font_msg_queue->font, line, line_len, 1.0f);
+
+      if (measured_width > 0
+            && (unsigned)measured_width > max_line_width)
+         max_line_width = (unsigned)measured_width;
+
+      if (!newline)
+         break;
+      line = newline + 1;
+   }
+
+   if (max_line_width > max_text_width)
+      max_line_width = max_text_width;
+   state->line_count = line_count;
+   state->bg_width   = max_line_width + state->text_padding * 2;
+   if (state->bg_width > max_bg_width)
+      state->bg_width = max_bg_width;
+   state->bg_height  = (unsigned)(
+         (font_msg_queue->line_height * state->line_count)
+         + state->text_padding * 2);
+
+   state->bg_x   = ((float)video_width - (float)state->bg_width) * 0.5f;
+   state->bg_y   = (float)video_height - (float)state->bg_height
+         - (float)p_w_generic_message_st.bg_height
+         - (float)state->text_padding;
+   if (state->bg_y < 0.0f)
+      state->bg_y = 0.0f;
+   state->text_x = state->bg_x + (float)state->text_padding;
+   state->text_y = state->bg_y + (float)state->text_padding
+         + (font_msg_queue->line_height * 0.5f)
+         + font_msg_queue->line_centre_offset;
+}
+#endif
 
 /* Callbacks */
 
@@ -177,8 +536,8 @@ void gfx_widget_set_generic_message(
       return;
 
    /* Cache message parameters */
-   state->message_len      = strlcpy(state->message,
-         msg, sizeof(state->message));
+   state->message_len      = gfx_widget_copy_message(
+         state->message, sizeof(state->message), msg);
    state->message_duration = duration;
 
    /* Get background width */
@@ -230,6 +589,34 @@ void gfx_widget_set_generic_message(
     *     user never sees it... */
    state->message_updated = true;
 }
+
+#ifdef HAVE_TRANSLATE
+void gfx_widget_set_ai_service_message(
+      const char *msg, unsigned duration)
+{
+   gfx_widget_ai_service_message_state_t *state =
+         &p_w_ai_service_message_st;
+
+   if (!msg || !*msg)
+      return;
+
+   state->message_len = gfx_widget_copy_message(
+         state->message, sizeof(state->message), msg);
+   if (state->message_len == 0)
+      return;
+
+   gfx_widget_ai_service_sanitize_utf8(
+         state->message, state->message_len);
+
+   state->message_duration = duration;
+   state->message_updated  = true;
+}
+
+void gfx_widget_clear_ai_service_message(void)
+{
+   gfx_widget_ai_service_message_reset(true);
+}
+#endif
 
 /* Widget layout() */
 
@@ -314,6 +701,11 @@ static void gfx_widget_generic_message_layout(
    state->text_y_end      = state->bg_y_end + 
       ((float)state->bg_height * 0.5f) +
       (float)font_msg_queue->line_centre_offset;
+
+#ifdef HAVE_TRANSLATE
+   if (p_w_ai_service_message_st.message[0])
+      gfx_widget_ai_service_message_update_layout(p_dispwidget);
+#endif
 }
 
 /* Widget iterate() */
@@ -323,7 +715,32 @@ static void gfx_widget_generic_message_iterate(void *user_data,
       const char *dir_assets, char *font_path,
       bool is_threaded)
 {
+   dispgfx_widget_t *p_dispwidget = (dispgfx_widget_t*)user_data;
    gfx_widget_generic_message_state_t *state = &p_w_generic_message_st;
+
+#ifdef HAVE_TRANSLATE
+   gfx_widget_ai_service_message_state_t *ai_state =
+         &p_w_ai_service_message_st;
+
+   if (ai_state->message_updated)
+   {
+      gfx_timer_ctx_entry_t timer;
+      uintptr_t timer_tag = (uintptr_t)&ai_state->timer;
+
+      gfx_animation_kill_by_tag(&timer_tag);
+      gfx_widget_ai_service_message_update_layout(p_dispwidget);
+
+      timer.duration = ai_state->message_duration;
+      timer.cb       = gfx_widget_ai_service_message_expired_cb;
+      timer.userdata = ai_state;
+      gfx_animation_timer_start(&ai_state->timer, &timer);
+
+      ai_state->visible         = true;
+      ai_state->message_updated = false;
+   }
+#else
+   (void)p_dispwidget;
+#endif
 
    if (state->message_updated)
    {
@@ -409,9 +826,100 @@ static void gfx_widget_generic_message_iterate(void *user_data,
 
 /* Widget frame() */
 
+#ifdef HAVE_TRANSLATE
+static void gfx_widget_ai_service_message_frame(
+      video_frame_info_t *video_info,
+      dispgfx_widget_t *p_dispwidget)
+{
+   gfx_widget_ai_service_message_state_t *state =
+         &p_w_ai_service_message_st;
+   unsigned video_width;
+   unsigned video_height;
+   void *userdata;
+   gfx_display_t *p_disp;
+   gfx_display_ctx_driver_t *dispctx;
+   gfx_widget_font_data_t *font_msg_queue;
+   unsigned text_color;
+
+   if (!state->visible || !state->wrapped[0])
+      return;
+
+   video_width    = video_info->width;
+   video_height   = video_info->height;
+   userdata       = video_info->userdata;
+   p_disp         = (gfx_display_t*)video_info->disp_userdata;
+   dispctx        = p_disp ? p_disp->dispctx : NULL;
+   font_msg_queue = &p_dispwidget->gfx_widget_fonts.msg_queue;
+   text_color     = COLOR_TEXT_ALPHA(state->text_color, 255);
+
+   gfx_display_set_alpha(p_w_generic_message_st.bg_color, 0.88f);
+   gfx_display_set_alpha(p_w_generic_message_st.frame_color, 0.92f);
+
+   gfx_display_draw_quad(
+         p_disp, userdata, video_width, video_height,
+         state->bg_x, state->bg_y,
+         state->bg_width, state->bg_height,
+         video_width, video_height,
+         p_w_generic_message_st.bg_color, NULL);
+
+   gfx_display_draw_quad(
+         p_disp, userdata, video_width, video_height,
+         state->bg_x - (float)state->frame_width,
+         state->bg_y - (float)state->frame_width,
+         state->bg_width + state->frame_width * 2,
+         state->frame_width,
+         video_width, video_height,
+         p_w_generic_message_st.frame_color, NULL);
+   gfx_display_draw_quad(
+         p_disp, userdata, video_width, video_height,
+         state->bg_x - (float)state->frame_width,
+         state->bg_y,
+         state->frame_width, state->bg_height,
+         video_width, video_height,
+         p_w_generic_message_st.frame_color, NULL);
+   gfx_display_draw_quad(
+         p_disp, userdata, video_width, video_height,
+         state->bg_x + (float)state->bg_width,
+         state->bg_y,
+         state->frame_width, state->bg_height,
+         video_width, video_height,
+         p_w_generic_message_st.frame_color, NULL);
+   gfx_display_draw_quad(
+         p_disp, userdata, video_width, video_height,
+         state->bg_x - (float)state->frame_width,
+         state->bg_y + (float)state->bg_height,
+         state->bg_width + state->frame_width * 2,
+         state->frame_width,
+         video_width, video_height,
+         p_w_generic_message_st.frame_color, NULL);
+
+   /* Flush glyphs batched by widgets drawn earlier in the frame before
+    * enabling this overlay's clip rectangle. Otherwise unrelated text (for
+    * example leaderboard widgets) would be clipped to the translation box. */
+   gfx_widgets_flush_text(video_width, video_height, font_msg_queue);
+   gfx_display_scissor_begin(
+         p_disp, userdata, video_width, video_height,
+         (int)state->bg_x, (int)state->bg_y,
+         state->bg_width, state->bg_height);
+   gfx_widgets_draw_text(
+         font_msg_queue, state->wrapped,
+         state->text_x, state->text_y,
+         video_width, video_height,
+         text_color, TEXT_ALIGN_LEFT, true);
+   gfx_widgets_flush_text(video_width, video_height, font_msg_queue);
+   if (dispctx && dispctx->scissor_end)
+      dispctx->scissor_end(userdata, video_width, video_height);
+}
+#endif
+
 static void gfx_widget_generic_message_frame(void *data, void *user_data)
 {
    gfx_widget_generic_message_state_t *state = &p_w_generic_message_st;
+
+#ifdef HAVE_TRANSLATE
+   gfx_widget_ai_service_message_frame(
+         (video_frame_info_t*)data, (dispgfx_widget_t*)user_data);
+#endif
 
    if (state->status != GFX_WIDGET_GENERIC_MESSAGE_IDLE)
    {
@@ -555,6 +1063,9 @@ static void gfx_widget_generic_message_frame(void *data, void *user_data)
 static void gfx_widget_generic_message_free(void)
 {
    gfx_widget_generic_message_reset(true);
+#ifdef HAVE_TRANSLATE
+   gfx_widget_ai_service_message_reset(true);
+#endif
 }
 
 /* Widget definition */
@@ -562,6 +1073,10 @@ static void gfx_widget_generic_message_free(void)
 static bool gfx_widget_generic_message_visible(void)
 {
    gfx_widget_generic_message_state_t *state = &p_w_generic_message_st;
+#ifdef HAVE_TRANSLATE
+   if (p_w_ai_service_message_st.visible)
+      return true;
+#endif
    return state->status != GFX_WIDGET_GENERIC_MESSAGE_IDLE;
 }
 

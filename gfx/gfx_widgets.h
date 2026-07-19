@@ -411,6 +411,9 @@ bool gfx_widgets_ai_service_overlay_load(
       enum image_type_enum image_type);
 
 void gfx_widgets_ai_service_overlay_unload(void);
+void gfx_widget_set_ai_service_message(
+      const char *message, unsigned duration);
+void gfx_widget_clear_ai_service_message(void);
 #endif
 
 #ifdef HAVE_CHEEVOS

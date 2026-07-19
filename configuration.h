@@ -546,6 +546,8 @@ typedef struct settings
       char midi_input[32];
       char midi_output[32];
       char ai_service_backend[32];
+      char ai_service_model[256];
+      char ai_service_api_key[512];
 #ifdef HAVE_LAKKA
       char cpu_main_gov[32];
       char cpu_menu_gov[32];
