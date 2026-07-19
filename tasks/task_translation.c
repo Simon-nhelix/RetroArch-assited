@@ -18,6 +18,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -37,6 +38,7 @@
 #include <gfx/scaler/pixconv.h>
 #include <gfx/scaler/scaler.h>
 #include <gfx/video_frame.h>
+#include <lists/string_list.h>
 #include "../translation_defines.h"
 
 #ifdef HAVE_GFX_WIDGETS
@@ -1711,6 +1713,9 @@ finish:
 #define OPENAI_TRANSLATION_TEXT_SIZE   16384
 #define OPENAI_MODEL_OPTIONS_SIZE      65536
 #define OPENAI_MODEL_REFRESH_SECONDS   30
+#define OPENAI_MODEL_SORT_GENERAL      100
+#define OPENAI_MODEL_SORT_SPECIALIZED  200
+#define OPENAI_MODEL_SORT_IMAGE        300
 #define OPENAI_UNCHANGED_POLL_USEC     (100 * 1000)
 #define OPENAI_TEXT_REFRESH_USEC       (2 * 1000 * 1000)
 
@@ -1995,6 +2000,54 @@ static bool openai_append_model_option(char *options, size_t options_size,
    return true;
 }
 
+/* /models only guarantees opaque IDs; it does not expose modality or latency
+ * metadata. Keep the small set exercised with this implementation first, then
+ * group the remaining IDs conservatively so code/agent/image models do not
+ * obscure ordinary translation choices. The raw ID is never rewritten. */
+static int openai_model_sort_rank(const char *model)
+{
+   static const char *const preferred_order[] = {
+      "gemini-3.1-flash-lite",
+      "gemini-3.5-flash-extra-low",
+      "gemini-3-flash",
+      "gpt-5.4-mini",
+      "gpt-5.6-luna"
+   };
+   size_t i;
+
+   if (!model)
+      return OPENAI_MODEL_SORT_GENERAL;
+
+   for (i = 0; i < ARRAY_SIZE(preferred_order); i++)
+      if (string_is_equal(model, preferred_order[i]))
+         return (int)i;
+
+   if (string_starts_with_size(model, "gpt-image-",
+            STRLEN_CONST("gpt-image-"))
+         || strstr(model, "-image"))
+      return OPENAI_MODEL_SORT_IMAGE;
+
+   if (strstr(model, "codex")
+         || strstr(model, "-code")
+         || strstr(model, "agent")
+         || strstr(model, "auto-review"))
+      return OPENAI_MODEL_SORT_SPECIALIZED;
+
+   return OPENAI_MODEL_SORT_GENERAL;
+}
+
+static int openai_model_entry_compare(const void *a_, const void *b_)
+{
+   const struct string_list_elem *a =
+         (const struct string_list_elem*)a_;
+   const struct string_list_elem *b =
+         (const struct string_list_elem*)b_;
+
+   if (a->attr.i != b->attr.i)
+      return a->attr.i < b->attr.i ? -1 : 1;
+   return strcmp(a->data, b->data);
+}
+
 static void openai_refresh_menu(void)
 {
 #ifdef HAVE_MENU
@@ -2012,6 +2065,7 @@ static void openai_models_cb(retro_task_t *task, void *task_data,
    settings_t *settings       = config_get_ptr();
    char *options              = NULL;
    size_t used                = 0;
+   struct string_list *models = NULL;
    rjson_t *json              = NULL;
    enum rjson_type type;
    (void)task;
@@ -2028,10 +2082,8 @@ static void openai_models_cb(retro_task_t *task, void *task_data,
    if (!(options = (char*)calloc(1, OPENAI_MODEL_OPTIONS_SIZE)))
       goto finish;
 
-   if (settings->arrays.ai_service_model[0])
-      openai_append_model_option(options, OPENAI_MODEL_OPTIONS_SIZE, &used,
-            settings->arrays.ai_service_model,
-            strlen(settings->arrays.ai_service_model));
+   if (!(models = string_list_new()))
+      goto finish;
 
    if (!(json = rjson_open_buffer(data->data, data->len)))
       goto finish;
@@ -2054,9 +2106,45 @@ static void openai_models_cb(retro_task_t *task, void *task_data,
       {
          const char *model;
          size_t model_len;
+         union string_list_elem_attr attr;
          model = rjson_get_string(json, &model_len);
+         if (model_len == 0 || memchr(model, '|', model_len))
+            continue;
+         attr.i = 0;
+         if (string_list_append_n(models, model, model_len, attr))
+            models->elems[models->size - 1].attr.i =
+                  openai_model_sort_rank(
+                        models->elems[models->size - 1].data);
+      }
+   }
+
+   qsort(models->elems, models->size, sizeof(*models->elems),
+         openai_model_entry_compare);
+
+   {
+      size_t i;
+
+      /* Put tested translation choices first. A custom/current ID comes
+       * next, before the alphabetised general catalogue. */
+      for (i = 0; i < models->size; i++)
+      {
+         const char *model = models->elems[i].data;
+         if (models->elems[i].attr.i >= OPENAI_MODEL_SORT_GENERAL)
+            break;
          openai_append_model_option(options, OPENAI_MODEL_OPTIONS_SIZE,
-               &used, model, model_len);
+               &used, model, strlen(model));
+      }
+
+      if (settings->arrays.ai_service_model[0])
+         openai_append_model_option(options, OPENAI_MODEL_OPTIONS_SIZE,
+               &used, settings->arrays.ai_service_model,
+               strlen(settings->arrays.ai_service_model));
+
+      for (; i < models->size; i++)
+      {
+         const char *model = models->elems[i].data;
+         openai_append_model_option(options, OPENAI_MODEL_OPTIONS_SIZE,
+               &used, model, strlen(model));
       }
    }
 
@@ -2070,6 +2158,8 @@ static void openai_models_cb(retro_task_t *task, void *task_data,
 finish:
    if (json)
       rjson_free(json);
+   if (models)
+      string_list_free(models);
    if (options)
       free(options);
    if (ctx && ctx->request_id == openai_models_request_id)

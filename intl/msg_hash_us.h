@@ -19440,7 +19440,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_AI_SERVICE_MODEL,
-   "Select a remote translation model, or enter a model identifier directly. Apple OCR + OpenAI can use fast text-only models."
+   "Recommended translation models appear first. Labels distinguish tested screen/OCR models from general, coding, agent and image-generation models. 'Untested' means the endpoint did not report capabilities. Press Start to enter any raw model ID."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_AI_SERVICE_REASONING_EFFORT,
@@ -35718,6 +35718,38 @@ MSG_HASH(
 MSG_HASH(
    MSG_AI_SERVICE_STOPPED,
    "stopped."
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_RECOMMENDED_FAST_SCREEN,
+   "Recommended / Fast screen translation"
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_TESTED_SCREEN,
+   "Tested / Screen translation"
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_TESTED_OCR_TEXT,
+   "Tested / OCR text translation"
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_FAST_CANDIDATE_UNTESTED,
+   "Fast candidate / Untested"
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED,
+   "General model / Untested"
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_AGENT_NOT_RECOMMENDED,
+   "Agent model / Not recommended"
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_CODE_NOT_RECOMMENDED,
+   "Coding model / Not recommended"
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_IMAGE_NOT_TRANSLATION,
+   "Image generation / Not for translation"
    )
 #ifdef HAVE_GAME_AI
 MSG_HASH(

@@ -3381,6 +3381,62 @@ static size_t setting_get_string_representation_password(
 #endif
 
 #ifdef HAVE_TRANSLATE
+typedef struct ai_service_model_display
+{
+   const char *id;
+   const char *name;
+   enum msg_hash_enums role;
+} ai_service_model_display_t;
+
+static const ai_service_model_display_t ai_service_model_displays[] = {
+   {"gemini-3.1-flash-lite", "Gemini 3.1 Flash Lite",
+      MSG_AI_SERVICE_MODEL_RECOMMENDED_FAST_SCREEN},
+   {"gemini-3.5-flash-extra-low", "Gemini 3.5 Flash / Extra Low",
+      MSG_AI_SERVICE_MODEL_TESTED_SCREEN},
+   {"gemini-3-flash", "Gemini 3 Flash",
+      MSG_AI_SERVICE_MODEL_TESTED_SCREEN},
+   {"gpt-5.4-mini", "GPT 5.4 / Mini",
+      MSG_AI_SERVICE_MODEL_TESTED_SCREEN},
+   {"gpt-5.6-luna", "GPT 5.6 / Luna profile",
+      MSG_AI_SERVICE_MODEL_TESTED_OCR_TEXT},
+   {"gemini-3.5-flash-low", "Gemini 3.5 Flash / Low",
+      MSG_AI_SERVICE_MODEL_FAST_CANDIDATE_UNTESTED},
+   {"fugu", "Fugu",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"fugu-ultra", "Fugu / Ultra",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"gpt-5.4", "GPT 5.4 / Standard",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"gpt-5.5", "GPT 5.5 / Standard",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"gpt-5.6", "GPT 5.6 / Default",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"gpt-5.6-sol", "GPT 5.6 / Sol profile",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"gpt-5.6-terra", "GPT 5.6 / Terra profile",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"gpt-oss-120b-medium", "GPT OSS 120B / Medium",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"gpt-5.3-codex-spark", "GPT 5.3 / Codex Spark",
+      MSG_AI_SERVICE_MODEL_CODE_NOT_RECOMMENDED},
+   {"codex-auto-review", "Codex / Auto Review",
+      MSG_AI_SERVICE_MODEL_CODE_NOT_RECOMMENDED},
+   {"kimi-k2.7-code", "Kimi K2.7 / Code",
+      MSG_AI_SERVICE_MODEL_CODE_NOT_RECOMMENDED},
+   {"kimi-k2.7-code-highspeed", "Kimi K2.7 / Code High Speed",
+      MSG_AI_SERVICE_MODEL_CODE_NOT_RECOMMENDED},
+   {"gemini-pro-agent", "Gemini Pro / Agent",
+      MSG_AI_SERVICE_MODEL_AGENT_NOT_RECOMMENDED},
+   {"gemini-3-flash-agent", "Gemini 3 Flash / Agent",
+      MSG_AI_SERVICE_MODEL_AGENT_NOT_RECOMMENDED},
+   {"gpt-image-1.5", "GPT Image 1.5",
+      MSG_AI_SERVICE_MODEL_IMAGE_NOT_TRANSLATION},
+   {"gpt-image-2", "GPT Image 2",
+      MSG_AI_SERVICE_MODEL_IMAGE_NOT_TRANSLATION},
+   {"gemini-3.1-flash-image", "Gemini 3.1 Flash / Image",
+      MSG_AI_SERVICE_MODEL_IMAGE_NOT_TRANSLATION}
+};
+
 static size_t setting_get_string_representation_ai_service_backend(
       rarch_setting_t *setting, char *s, size_t len)
 {
@@ -3397,6 +3453,29 @@ static size_t setting_get_string_representation_ai_service_backend(
    if (string_is_equal(backend, "http"))
       return strlcpy(s, "HTTP (Legacy)", len);
    return strlcpy(s, backend, len);
+}
+
+static size_t setting_get_string_representation_ai_service_model(
+      rarch_setting_t *setting, char *s, size_t len)
+{
+   const char *model;
+   size_t i;
+
+   if (!setting || !(model = setting->value.target.string))
+      return 0;
+
+   for (i = 0; i < ARRAY_SIZE(ai_service_model_displays); i++)
+   {
+      const ai_service_model_display_t *display =
+            &ai_service_model_displays[i];
+      if (string_is_equal(model, display->id))
+         return snprintf(s, len, "%s - %s [%s]", display->name,
+               msg_hash_to_str(display->role), display->id);
+   }
+
+   /* Unlike the default path representation, retain provider prefixes in
+    * custom IDs such as "openai/gpt-...". */
+   return strlcpy(s, model, len);
 }
 
 static size_t setting_get_string_representation_ai_service_api_key(
@@ -15881,6 +15960,7 @@ static void settings_build_ai_service(
       SETTINGS_ACTION_SET(left, &(*list)[list_info->index - 1], setting_string_action_left_options)
       SETTINGS_ACTION_SET(right, &(*list)[list_info->index - 1], setting_string_action_right_options)
       SETTINGS_ACTION_SET(start, &(*list)[list_info->index - 1], setting_string_action_start_input)
+      SETTINGS_ACTION_SET(repr, &(*list)[list_info->index - 1], setting_get_string_representation_ai_service_model)
 
       CONFIG_STRING_OPTIONS(
             list, list_info,
