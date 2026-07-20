@@ -524,6 +524,7 @@ struct menu_state
    unsigned input_dialog_kb_type;
    unsigned input_dialog_kb_idx;
    unsigned input_driver_flushing_input;
+   bool input_dialog_kb_password;
    menu_dialog_t dialog_st;
    enum menu_action prev_action;
 #ifdef HAVE_RUNAHEAD
@@ -557,6 +558,7 @@ struct menu_state
 #ifdef HAVE_MENU
    char input_dialog_kb_label_setting[256];
    char input_dialog_kb_label[256];
+   char input_dialog_kb_display_buffer[PATH_MAX_LENGTH];
 #endif
    unsigned char kb_key_state[RETROK_LAST];
 };

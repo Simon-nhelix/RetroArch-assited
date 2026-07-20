@@ -8478,7 +8478,7 @@ static void materialui_frame(void *data, video_frame_info_t *video_info)
       size_t _len;
       char msg[NAME_MAX_LENGTH];
       input_driver_state_t *input_st = input_state_get_ptr();
-      const char *str                = menu_input_dialog_get_buffer();
+      const char *str                = menu_input_dialog_get_display_buffer();
       const char *label              = menu_st->input_dialog_kb_label;
 
       /* Darken screen */

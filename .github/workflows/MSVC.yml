@@ -29,6 +29,9 @@ jobs:
           - version: UWP
             configuration: ReleaseAngle
             platform: x64
+          - version: 2022
+            configuration: Release
+            platform: x86
         # Qt and Cg builds are excluded for now
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +55,6 @@ jobs:
           name: retroarch-${{matrix.version}}-${{matrix.configuration}}-${{matrix.platform}}-${{ steps.slug.outputs.sha8 }}
           path: |
             ${{ matrix.version != 'UWP' }}:
-              pkg/msvc/${{matrix.platform}}/${{matrix.configuration}}/RetroArch-msvc${{matrix.version}}.exe
+              pkg/msvc/${{ matrix.platform == 'x86' && 'Win32' || matrix.platform }}/${{matrix.configuration}}/RetroArch-msvc${{matrix.version}}.exe
             ${{ matrix.version == 'UWP' }}:
               pkg/msvc-uwp/AppPackages/RetroArch-msvcUWP
-

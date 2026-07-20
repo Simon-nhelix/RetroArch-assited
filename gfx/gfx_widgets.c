@@ -16,6 +16,7 @@
  */
 
 #include <retro_miscellaneous.h>
+#include <stdlib.h>
 
 #ifdef HAVE_CONFIG_H
 #include "../config.h"
@@ -943,6 +944,29 @@ static void gfx_widgets_layout(
             p_dispwidget->assets_pkg_dir,
             "korean-fallback-font.ttf",
             sizeof(ai_service_font_file));
+#if defined(_WIN32) && !defined(_XBOX) && !defined(__WINRT__)
+      /* Standalone MSVC artifacts do not bundle the external RetroArch
+       * assets repository. Prefer the normal asset, then use the system's
+       * Korean UI font so translated Hangul remains readable before the
+       * user runs Online Updater > Update Assets. */
+      if (!path_is_valid(ai_service_font_file))
+      {
+         const char *windows_dir = getenv("WINDIR");
+         if (windows_dir && *windows_dir)
+         {
+            char windows_fonts_dir[PATH_MAX_LENGTH];
+            char windows_korean_font[PATH_MAX_LENGTH];
+            fill_pathname_join_special(windows_fonts_dir,
+                  windows_dir, "Fonts", sizeof(windows_fonts_dir));
+            fill_pathname_join_special(windows_korean_font,
+                  windows_fonts_dir, "malgun.ttf",
+                  sizeof(windows_korean_font));
+            if (path_is_valid(windows_korean_font))
+               strlcpy(ai_service_font_file, windows_korean_font,
+                     sizeof(ai_service_font_file));
+         }
+      }
+#endif
       gfx_widgets_font_init(p_disp, p_dispwidget,
             &p_dispwidget->gfx_widget_fonts.ai_service_korean,
             is_threaded, ai_service_font_file, MSG_QUEUE_FONT_SIZE);

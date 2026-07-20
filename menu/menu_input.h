@@ -258,7 +258,13 @@ void menu_input_get_pointer_state(menu_input_pointer_t *copy_target);
 
 bool menu_input_dialog_start(menu_input_ctx_line_t *line);
 
+bool menu_input_dialog_start_password(menu_input_ctx_line_t *line);
+
 const char *menu_input_dialog_get_buffer(void);
+
+const char *menu_input_dialog_get_display_buffer(void);
+
+bool menu_input_dialog_is_password(void);
 
 bool menu_input_dialog_start_search(void);
 

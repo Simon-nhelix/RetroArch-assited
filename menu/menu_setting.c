@@ -699,7 +699,9 @@ static int setting_generic_action_ok_linefeed(
    line.idx           = 0;
    line.cb            = cb;
 
-   if (!menu_input_dialog_start(&line))
+   if (!(setting->ui_type == ST_UI_TYPE_PASSWORD_LINE_EDIT
+         ? menu_input_dialog_start_password(&line)
+         : menu_input_dialog_start(&line)))
       return -1;
    return 0;
 }
