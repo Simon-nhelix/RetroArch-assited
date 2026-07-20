@@ -2778,6 +2778,9 @@ ifeq ($(HAVE_COCOA_COMMON),1)
       OBJ += ui/drivers/cocoa/RetroArchPlaylistManager.o
    endif
    LIBS += -framework Cocoa -framework AppKit -framework Foundation
+   # CAFrameRateRangeMake (cocoa_common.m, dispserv_apple.m) lives in
+   # CoreAnimation; previously only pulled in transitively via HAVE_METAL.
+   LIBS += -framework QuartzCore
 
    ifeq ($(HAVE_OPENGL), 1)
            DEFINES += -DGL_SILENCE_DEPRECATION

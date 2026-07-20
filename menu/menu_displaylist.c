@@ -4204,8 +4204,10 @@ static unsigned menu_displaylist_parse_information_list(file_list_t *info_list)
                false) == 0)
             count++;
 
-      if (      settings->bools.kiosk_mode_enable
-            && *settings->paths.kiosk_mode_password)
+      /* Show the escape hatch whenever kiosk mode is on, not only when a
+       * password is set - otherwise enabling kiosk mode without a password
+       * locks the user out of the settings with no UI way back. */
+      if (      settings->bools.kiosk_mode_enable)
          if (MENU_DISPLAYLIST_PARSE_SETTINGS_ENUM(
                info_list,
                MENU_ENUM_LABEL_MENU_DISABLE_KIOSK_MODE,
@@ -15741,8 +15743,9 @@ bool menu_displaylist_ctl(enum menu_displaylist_ctl_state type,
                            false) == 0)
                         count++;
 
-                  if (      settings->bools.kiosk_mode_enable
-                        && *settings->paths.kiosk_mode_password)
+                  /* See above: never gate the kiosk-mode escape hatch
+                   * behind the password being set. */
+                  if (      settings->bools.kiosk_mode_enable)
                      if (MENU_DISPLAYLIST_PARSE_SETTINGS_ENUM(
                            info->list,
                            MENU_ENUM_LABEL_MENU_DISABLE_KIOSK_MODE,
