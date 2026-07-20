@@ -62,6 +62,7 @@
 #include "dynamic.h"
 #include "list_special.h"
 #include "paths.h"
+#include "core.h"
 #include "retroarch.h"
 #include "runloop.h"
 #include "verbosity.h"
@@ -1131,7 +1132,28 @@ static uint8_t *command_memory_get_pointer(
       int for_write, char *s, size_t len)
 {
    if (!sys_info || sys_info->mmaps.num_descriptors == 0)
-      strlcpy(s, " -1 no memory map defined\n", len);
+   {
+      /* Cores that do not expose a memory map
+       * (RETRO_ENVIRONMENT_GET_MEMORY_MAP) may still expose plain
+       * system RAM through retro_get_memory_data(). Fall back to that
+       * so READ/WRITE_CORE_MEMORY keep working for them (e.g.
+       * Genesis Plus GX), treating the address as an offset into
+       * RETRO_MEMORY_SYSTEM_RAM. */
+      retro_ctx_memory_info_t mem_info;
+      mem_info.id   = RETRO_MEMORY_SYSTEM_RAM;
+      mem_info.data = NULL;
+      mem_info.size = 0;
+      core_get_memory(&mem_info);
+      if (!mem_info.data || mem_info.size == 0)
+         strlcpy(s, " -1 no memory map defined\n", len);
+      else if (address >= mem_info.size)
+         strlcpy(s, " -1 no descriptor for address\n", len);
+      else
+      {
+         *max_bytes = (unsigned int)(mem_info.size - address);
+         return (uint8_t*)mem_info.data + address;
+      }
+   }
    else
    {
       size_t offset;
