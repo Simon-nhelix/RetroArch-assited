@@ -2,6 +2,10 @@
 
 # RetroArch
 
+> **This is a fork.** It adds native AI translation, trainer-friendly
+> network memory commands for all cores, and a bundled AI-agent trainer
+> MCP server (`tools/trainer-mcp/`). See **[FORK-FEATURES.md](FORK-FEATURES.md)**.
+
 RetroArch is the reference frontend for the libretro API.
 Popular examples of implementations for this API includes video game system emulators and game engines as well as
 more generalized 3D programs.
