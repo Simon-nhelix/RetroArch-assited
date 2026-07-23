@@ -291,3 +291,7 @@ gfx/drivers/rsx_shaders/modern_opaque.fpo
 gfx/drivers/rsx_shaders/modern_opaque.vpo
 pkg/psl1ght/pkg/USRDIR/shaders_cg/
 !pkg/psl1ght/pkg/USRDIR/system/
+
+# macOS commandline build artifacts (Makefile metal/dylib rules)
+default.metallib
+gfx/common/metal/Shaders.air

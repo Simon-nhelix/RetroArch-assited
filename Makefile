@@ -144,6 +144,10 @@ endif
 
 RARCH_OBJ := $(addprefix $(OBJDIR)/,$(OBJ))
 
+ifeq ($(HAVE_TRANSLATE_APPLE),1)
+RARCH_LINK_DEPS += $(APPLE_TRANSLATE_DYLIB)
+endif
+
 ifneq ($(X86),)
    CFLAGS += -m32
    CXXFLAGS += -m32
@@ -230,9 +234,27 @@ endif
 
 SYMBOL_MAP := -Wl,-Map=output.map
 
-$(TARGET): $(RARCH_OBJ)
+$(TARGET): $(RARCH_OBJ) $(RARCH_LINK_DEPS)
 	@$(if $(Q), $(shell echo echo LD $@),)
 	$(Q)$(LINK) -o $@ $(RARCH_OBJ) $(LIBS) $(LDFLAGS) $(LIBRARY_DIRS)
+
+ifeq ($(HAVE_TRANSLATE_APPLE),1)
+$(APPLE_TRANSLATE_DYLIB): ui/drivers/cocoa/AppleTranslateBackend.swift \
+		pkg/apple/RetroArch-Bridging-Header.h \
+		ui/drivers/cocoa/translation_driver_apple.h config.h config.mk
+	@mkdir -p $(dir $@)
+	@$(if $(Q), $(shell echo echo SWIFT $<),)
+	$(Q)$(APPLE_TRANSLATE_SWIFTC) -swift-version 5 -parse-as-library \
+		-emit-library -target $(APPLE_TRANSLATE_SWIFT_TARGET) \
+		-import-objc-header pkg/apple/RetroArch-Bridging-Header.h \
+		-Xcc -I. -Xcc -Ilibretro-common/include -Xcc -Ideps \
+		-Xcc -DHAVE_COCOA -Xcc -DHAVE_TRANSLATE \
+		-Xcc -DHAVE_TRANSLATE_APPLE \
+		-Xlinker -install_name \
+		-Xlinker '@rpath/libAppleTranslateBackend.dylib' \
+		-Xlinker -undefined -Xlinker dynamic_lookup \
+		-o $@ $<
+endif
 
 # Compile the Metal shader library used by gfx/drivers/metal.m via
 # [device newDefaultLibrary]. Xcode produces this automatically for the
@@ -405,7 +427,9 @@ BUNDLE_VERSION     ?= $(PACKAGE_VERSION)
 BUNDLE_BUILD       ?= 44
 # Extract X.Y from '-mmacosx-version-min=X.Y' inside $(MINVERFLAGS).
 # If nothing matches (e.g. building with a custom toolchain), fall back to 10.13.
-BUNDLE_MIN_OS      ?= $(or $(patsubst -mmacosx-version-min=%,%,$(filter -mmacosx-version-min=%,$(MINVERFLAGS))),10.13)
+# An Apple-translation bundle also contains Swift code and must advertise the
+# same deployment floor as that dylib (11.0 for Apple Silicon).
+BUNDLE_MIN_OS      ?= $(if $(filter 1,$(HAVE_TRANSLATE_APPLE)),$(APPLE_TRANSLATE_MIN_OS),$(or $(patsubst -mmacosx-version-min=%,%,$(filter -mmacosx-version-min=%,$(MINVERFLAGS))),10.13))
 # Detect legacy macOS targets (< 10.9 Mavericks). Pre-Mavericks codesign
 # predates the `--timestamp` option; the dyld/Gatekeeper enforcement that
 # makes ad-hoc signing worth doing didn't exist yet either, so on legacy
@@ -420,7 +444,7 @@ INFO_PLIST_SRC     := pkg/apple/OSX/Info_Metal.plist
 # and shipping MoltenVK would be dead weight that can't even load.
 MOLTENVK_FRAMEWORK := pkg/apple/Frameworks/MoltenVK.xcframework/macos-arm64_x86_64/MoltenVK.framework
 
-bundle: $(TARGET) $(METALLIB)
+bundle: $(TARGET) $(METALLIB) $(RARCH_LINK_DEPS)
 	@echo "Assembling $(BUNDLE) (min macOS $(BUNDLE_MIN_OS))"
 	$(Q)rm -rf $(BUNDLE)
 	$(Q)mkdir -p $(BUNDLE)/Contents/MacOS
@@ -437,9 +461,16 @@ bundle: $(TARGET) $(METALLIB)
 		$(BUNDLE)/Contents/Resources/filters/audio/ 2>/dev/null || true
 	$(Q)cp gfx/video_filters/*.filt \
 		$(BUNDLE)/Contents/Resources/filters/video/ 2>/dev/null || true
+	$(Q)if [ -f media/retroarch.icns ]; then \
+		cp media/retroarch.icns $(BUNDLE)/Contents/Resources/retroarch.icns; \
+	fi
 	$(Q)if [ "$(HAVE_VULKAN)" = "1" ] && [ -d $(MOLTENVK_FRAMEWORK) ]; then \
 		mkdir -p $(BUNDLE)/Contents/Frameworks; \
 		cp -R $(MOLTENVK_FRAMEWORK) $(BUNDLE)/Contents/Frameworks/; \
+	fi
+	$(Q)if [ "$(HAVE_TRANSLATE_APPLE)" = "1" ]; then \
+		mkdir -p $(BUNDLE)/Contents/Frameworks; \
+		cp $(APPLE_TRANSLATE_DYLIB) $(BUNDLE)/Contents/Frameworks/; \
 	fi
 	$(Q)printf 'APPL????' > $(BUNDLE)/Contents/PkgInfo
 	$(Q)sed \
@@ -463,8 +494,9 @@ bundle: $(TARGET) $(METALLIB)
 	@# in some cases ad-hoc signing support altogether.
 	$(Q)if [ "$(MACOS_LEGACY)" != "1" ]; then \
 		if [ -d $(BUNDLE)/Contents/Frameworks ]; then \
-			for fw in $(BUNDLE)/Contents/Frameworks/*.framework; do \
-				[ -d "$$fw" ] && codesign --force --sign - --timestamp=none "$$fw"; \
+			for nested in $(BUNDLE)/Contents/Frameworks/*.framework \
+					$(BUNDLE)/Contents/Frameworks/*.dylib; do \
+				[ -e "$$nested" ] && codesign --force --sign - --timestamp=none "$$nested"; \
 			done; \
 		fi; \
 		codesign --force --sign - --timestamp=none $(BUNDLE); \
