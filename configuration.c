@@ -1582,6 +1582,9 @@ static struct config_array_setting *populate_settings_array(
    SETTING_ARRAY("midi_input",                   settings->arrays.midi_input, true, DEFAULT_MIDI_INPUT, true);
    SETTING_ARRAY("midi_output",                  settings->arrays.midi_output, true, DEFAULT_MIDI_OUTPUT, true);
    SETTING_ARRAY("ai_service_backend",           settings->arrays.ai_service_backend, false, NULL, true);
+   SETTING_ARRAY("ai_service_model",             settings->arrays.ai_service_model, true, DEFAULT_AI_SERVICE_MODEL, true);
+   SETTING_ARRAY("ai_service_reasoning_effort",  settings->arrays.ai_service_reasoning_effort, true, DEFAULT_AI_SERVICE_REASONING_EFFORT, true);
+   SETTING_ARRAY("ai_service_api_key",           settings->arrays.ai_service_api_key, true, DEFAULT_AI_SERVICE_API_KEY, true);
 
    SETTING_ARRAY("video_driver",                 settings->arrays.video_driver, false, NULL, true);
    SETTING_ARRAY("video_context_driver",         settings->arrays.video_context_driver, false, NULL, true);
@@ -5349,6 +5352,15 @@ void config_set_defaults(void *data)
       configuration_set_string(settings,
             settings->arrays.ai_service_backend,
             def_ai_service_backend);
+   configuration_set_string(settings,
+         settings->arrays.ai_service_model,
+         DEFAULT_AI_SERVICE_MODEL);
+   configuration_set_string(settings,
+         settings->arrays.ai_service_reasoning_effort,
+         DEFAULT_AI_SERVICE_REASONING_EFFORT);
+   configuration_set_string(settings,
+         settings->arrays.ai_service_api_key,
+         DEFAULT_AI_SERVICE_API_KEY);
 #endif
    if (def_location)
       configuration_set_string(settings,
@@ -9163,6 +9175,11 @@ int8_t config_save_overrides(enum override_type type,
       {
          if (!string_is_equal(array_settings[i].ptr, array_overrides[i].ptr))
          {
+            /* Credentials belong to the main configuration only. Never copy
+             * an AI service key into per-game/core overrides or debug logs. */
+            if (string_is_equal(array_settings[i].ident,
+                     "ai_service_api_key"))
+               continue;
 #ifdef HAVE_CHEEVOS
             /* As authentication doesn't occur until after content is loaded,
              * the achievement authentication token might only exist in the

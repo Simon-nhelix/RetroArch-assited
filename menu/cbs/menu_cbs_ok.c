@@ -3536,13 +3536,16 @@ static void menu_input_st_string_cb_rename_entry(void *userdata,
 static void menu_input_st_string_cb_disable_kiosk_mode(void *userdata,
       const char *str)
 {
-   if (str && *str)
+   if (str)
    {
       const char *label    = menu_input_dialog_get_buffer();
       settings_t *settings = config_get_ptr();
       const char *password = settings->paths.kiosk_mode_password;
 
-      if (string_is_equal(label, password))
+      /* An empty stored password means kiosk mode was enabled without one;
+       * always allow the escape in that case, otherwise there is no way
+       * back into the settings at all. */
+      if (!*password || string_is_equal(label, password))
       {
          const char *_msg = msg_hash_to_str(MSG_INPUT_KIOSK_MODE_PASSWORD_OK);
 

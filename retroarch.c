@@ -3324,6 +3324,10 @@ bool command_event(enum event_command cmd, void *data)
 #ifdef HAVE_ACCESSIBILITY
                   bool accessibility_enable = settings->bools.accessibility_enable;
                   unsigned accessibility_narrator_speech_speed = settings->uints.accessibility_narrator_speech_speed;
+#endif
+                  access_st->ai_service_auto = 0;
+                  ai_service_invalidate_translation();
+#ifdef HAVE_ACCESSIBILITY
                   if (is_accessibility_enabled(
                            accessibility_enable,
                            access_st->enabled))
@@ -3331,6 +3335,9 @@ bool command_event(enum event_command cmd, void *data)
                            accessibility_enable,
                            accessibility_narrator_speech_speed,
                            (char*)msg_hash_to_str(MSG_UNPAUSED), 10);
+#endif
+#ifdef HAVE_GFX_WIDGETS
+                  gfx_widget_clear_ai_service_message();
 #endif
                   command_event(CMD_EVENT_UNPAUSE, NULL);
                }
@@ -3350,13 +3357,19 @@ bool command_event(enum event_command cmd, void *data)
                 * Also, this mode is required for "auto" translation
                 * packages, since you don't want to pause for that.
                 */
-               if (access_st->ai_service_auto == 2)
+               if (access_st->ai_service_auto != 0)
                {
-                  /* Auto mode was turned on, but we pressed the
-                   * toggle button, so turn it off now. */
+                  /* Stop both an in-flight first request (state 1) and the
+                   * continuous polling loop (state 2). Invalidate the current
+                   * generation so a late OCR/HTTP callback cannot restore a
+                   * subtitle after the user has stopped translation. */
                   access_st->ai_service_auto = 0;
+                  ai_service_invalidate_translation();
 #ifdef HAVE_MENU_WIDGETS
                   gfx_widgets_ai_service_overlay_unload();
+#endif
+#ifdef HAVE_GFX_WIDGETS
+                  gfx_widget_clear_ai_service_message();
 #endif
                }
                else
@@ -3548,6 +3561,10 @@ bool command_event(enum event_command cmd, void *data)
          }
          break;
       case CMD_EVENT_LOAD_CORE:
+#ifdef HAVE_TRANSLATE
+         access_st->ai_service_auto = 0;
+         ai_service_invalidate_translation();
+#endif
          runloop_st->subsystem_current_count = 0;
          content_clear_subsystem();
 #ifdef HAVE_DYNAMIC
@@ -3843,6 +3860,11 @@ bool command_event(enum event_command cmd, void *data)
             rarch_system_info_t *sys_info   = &runloop_st->system;
             uint8_t flags                   = content_get_flags();
 
+#ifdef HAVE_TRANSLATE
+            access_st->ai_service_auto = 0;
+            ai_service_invalidate_translation();
+#endif
+
             runloop_st->flags              &= ~RUNLOOP_FLAG_CORE_RUNNING;
 
             /* The platform that uses ram_state_save calls it when the content
@@ -3960,6 +3982,10 @@ bool command_event(enum event_command cmd, void *data)
 #endif
          break;
       case CMD_EVENT_CLOSE_CONTENT:
+#ifdef HAVE_TRANSLATE
+         access_st->ai_service_auto = 0;
+         ai_service_invalidate_translation();
+#endif
 #ifdef HAVE_MENU
          /* If we need to quit, skip unloading the core to avoid performing
           * cleanup actions (like writing autosave state) twice. */
@@ -4531,6 +4557,11 @@ bool command_event(enum event_command cmd, void *data)
             video_driver_state_t
                *video_st                         = video_state_get_ptr();
             rarch_system_info_t *sys_info        = &runloop_st->system;
+
+#ifdef HAVE_TRANSLATE
+            access_st->ai_service_auto = 0;
+            ai_service_invalidate_translation();
+#endif
             
             /* Restore unpaused state. The recursive command_event call
              * here re-enters this dispatcher; the UNPAUSE branch is
@@ -5874,6 +5905,9 @@ bool command_event(enum event_command cmd, void *data)
                         (char*)msg_hash_to_str(MSG_AI_SERVICE_STOPPED),
                         10);
 #endif
+#ifdef HAVE_GFX_WIDGETS
+               gfx_widget_clear_ai_service_message();
+#endif
             }
             else
 #endif
@@ -5883,11 +5917,16 @@ bool command_event(enum event_command cmd, void *data)
                      access_st->enabled)
                   && (ai_service_mode == 2)
                   && is_narrator_running(accessibility_enable))
+            {
                accessibility_speak_priority(
                      accessibility_enable,
                      accessibility_narrator_speech_speed,
                      (char*)msg_hash_to_str(MSG_AI_SERVICE_STOPPED),
                      10);
+#ifdef HAVE_GFX_WIDGETS
+               gfx_widget_clear_ai_service_message();
+#endif
+            }
             else
 #endif
             {

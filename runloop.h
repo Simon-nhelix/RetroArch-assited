@@ -336,6 +336,15 @@ void runloop_msg_queue_push(const char *msg, size_t len,
       enum message_queue_icon icon,
       enum message_queue_category category);
 
+/* Queues visible text without sending it to the accessibility narrator.
+ * Intended for callers that manage narration separately. */
+void runloop_msg_queue_push_no_narrator(const char *msg, size_t len,
+      unsigned prio, unsigned duration,
+      bool flush,
+      char *title,
+      enum message_queue_icon icon,
+      enum message_queue_category category);
+
 void runloop_set_current_core_type(
       enum rarch_core_type type, bool explicitly_set);
 

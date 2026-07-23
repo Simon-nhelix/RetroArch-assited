@@ -101,6 +101,7 @@
 #endif
 
 #include "../configuration.h"
+#include "../accessibility.h"
 #include "../file_path_special.h"
 #include "../defaults.h"
 #include "../verbosity.h"
@@ -4203,8 +4204,10 @@ static unsigned menu_displaylist_parse_information_list(file_list_t *info_list)
                false) == 0)
             count++;
 
-      if (      settings->bools.kiosk_mode_enable
-            && *settings->paths.kiosk_mode_password)
+      /* Show the escape hatch whenever kiosk mode is on, not only when a
+       * password is set - otherwise enabling kiosk mode without a password
+       * locks the user out of the settings with no UI way back. */
+      if (      settings->bools.kiosk_mode_enable)
          if (MENU_DISPLAYLIST_PARSE_SETTINGS_ENUM(
                info_list,
                MENU_ENUM_LABEL_MENU_DISABLE_KIOSK_MODE,
@@ -8616,7 +8619,6 @@ unsigned menu_displaylist_build_list(
             static menu_displaylist_build_info_selective_t build_list[] = {
                {MENU_ENUM_LABEL_ACCESSIBILITY_ENABLED,               PARSE_ONLY_BOOL, true },
                {MENU_ENUM_LABEL_ACCESSIBILITY_NARRATOR_SPEECH_SPEED, PARSE_ONLY_UINT, false },
-               {MENU_ENUM_LABEL_AI_SERVICE_SETTINGS,                 PARSE_ACTION,    true },
             };
 
             for (i = 0; i < ARRAY_SIZE(build_list); i++)
@@ -8646,21 +8648,41 @@ unsigned menu_displaylist_build_list(
       case DISPLAYLIST_AI_SERVICE_SETTINGS_LIST:
          {
             bool ai_service_enable         = settings->bools.ai_service_enable;
+            bool ai_service_uses_openai    =
+                     string_is_equal(settings->arrays.ai_service_backend,
+                           "openai")
+                  || string_is_equal(settings->arrays.ai_service_backend,
+                           "apple_ocr_openai");
 
             static menu_displaylist_build_info_selective_t build_list[] = {
                {MENU_ENUM_LABEL_AI_SERVICE_ENABLE,        PARSE_ONLY_BOOL,   true},
-               {MENU_ENUM_LABEL_AI_SERVICE_MODE,          PARSE_ONLY_UINT,   false},
-               {MENU_ENUM_LABEL_AI_SERVICE_URL,           PARSE_ONLY_STRING, false},
+               {MENU_ENUM_LABEL_AI_SERVICE_TOGGLE,        PARSE_ACTION,      true},
                {MENU_ENUM_LABEL_AI_SERVICE_BACKEND,       PARSE_ONLY_STRING_OPTIONS, false},
-               {MENU_ENUM_LABEL_AI_SERVICE_PAUSE,         PARSE_ONLY_BOOL,   false},
-               {MENU_ENUM_LABEL_AI_SERVICE_SOURCE_LANG,   PARSE_ONLY_UINT,   false},
+               {MENU_ENUM_LABEL_AI_SERVICE_URL,           PARSE_ONLY_STRING, false},
+               {MENU_ENUM_LABEL_AI_SERVICE_MODEL,         PARSE_ONLY_STRING_OPTIONS, false},
+               {MENU_ENUM_LABEL_AI_SERVICE_REASONING_EFFORT, PARSE_ONLY_STRING_OPTIONS, false},
+               {MENU_ENUM_LABEL_AI_SERVICE_API_KEY,       PARSE_ONLY_STRING, false},
                {MENU_ENUM_LABEL_AI_SERVICE_TARGET_LANG,   PARSE_ONLY_UINT,   false},
+               {MENU_ENUM_LABEL_AI_SERVICE_SOURCE_LANG,   PARSE_ONLY_UINT,   false},
+               {MENU_ENUM_LABEL_AI_SERVICE_MODE,          PARSE_ONLY_UINT,   false},
+               {MENU_ENUM_LABEL_AI_SERVICE_PAUSE,         PARSE_ONLY_BOOL,   false},
             };
+
+#ifdef HAVE_TRANSLATE
+            if (ai_service_enable && ai_service_uses_openai)
+               ai_service_refresh_models();
+#endif
 
             for (i = 0; i < ARRAY_SIZE(build_list); i++)
             {
                switch (build_list[i].enum_idx)
                {
+                  case MENU_ENUM_LABEL_AI_SERVICE_MODEL:
+                  case MENU_ENUM_LABEL_AI_SERVICE_REASONING_EFFORT:
+                  case MENU_ENUM_LABEL_AI_SERVICE_API_KEY:
+                     build_list[i].checked =
+                           ai_service_enable && ai_service_uses_openai;
+                     break;
                   case MENU_ENUM_LABEL_AI_SERVICE_MODE:
                   case MENU_ENUM_LABEL_AI_SERVICE_BACKEND:
                   case MENU_ENUM_LABEL_AI_SERVICE_URL:
@@ -11534,6 +11556,9 @@ unsigned menu_displaylist_build_list(
 #endif
             static menu_displaylist_build_info_selective_t build_list[] = {
                {MENU_ENUM_LABEL_USER_INTERFACE_SETTINGS,     PARSE_ACTION, true},
+#ifdef HAVE_TRANSLATE
+               {MENU_ENUM_LABEL_AI_SERVICE_SETTINGS,         PARSE_ACTION, true},
+#endif
                {MENU_ENUM_LABEL_VIDEO_SETTINGS,              PARSE_ACTION, true},
                {MENU_ENUM_LABEL_AUDIO_SETTINGS,              PARSE_ACTION, true},
                {MENU_ENUM_LABEL_INPUT_SETTINGS,              PARSE_ACTION, true},
@@ -15718,8 +15743,9 @@ bool menu_displaylist_ctl(enum menu_displaylist_ctl_state type,
                            false) == 0)
                         count++;
 
-                  if (      settings->bools.kiosk_mode_enable
-                        && *settings->paths.kiosk_mode_password)
+                  /* See above: never gate the kiosk-mode escape hatch
+                   * behind the password being set. */
+                  if (      settings->bools.kiosk_mode_enable)
                      if (MENU_DISPLAYLIST_PARSE_SETTINGS_ENUM(
                            info->list,
                            MENU_ENUM_LABEL_MENU_DISABLE_KIOSK_MODE,

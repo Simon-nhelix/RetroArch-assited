@@ -1984,6 +1984,12 @@
 
 #define DEFAULT_AI_SERVICE_URL "http://localhost:4404/"
 
+#define DEFAULT_AI_SERVICE_MODEL ""
+
+#define DEFAULT_AI_SERVICE_REASONING_EFFORT "default"
+
+#define DEFAULT_AI_SERVICE_API_KEY ""
+
 #if defined(HAVE_FFMPEG) || defined(HAVE_MPV) || defined(HAVE_WEBMPLAYER)
 #define DEFAULT_BUILTIN_MEDIAPLAYER_ENABLE true
 #else

@@ -4409,6 +4409,29 @@ const char *menu_input_dialog_get_buffer(void)
    return *menu_st->input_dialog_keyboard_buffer;
 }
 
+const char *menu_input_dialog_get_display_buffer(void)
+{
+   struct menu_state *menu_st = &menu_driver_state;
+   const char *buffer         = menu_input_dialog_get_buffer();
+   size_t length;
+
+   if (!menu_st->input_dialog_kb_password)
+      return buffer;
+
+   length = utf8len(buffer);
+   if (length >= sizeof(menu_st->input_dialog_kb_display_buffer))
+      length = sizeof(menu_st->input_dialog_kb_display_buffer) - 1;
+
+   memset(menu_st->input_dialog_kb_display_buffer, '*', length);
+   menu_st->input_dialog_kb_display_buffer[length] = '\0';
+   return menu_st->input_dialog_kb_display_buffer;
+}
+
+bool menu_input_dialog_is_password(void)
+{
+   return menu_driver_state.input_dialog_kb_password;
+}
+
 /* This callback gets triggered by the keyboard whenever
  * we press or release a keyboard key. When a keyboard
  * key is being pressed down, 'down' will be true. If it
@@ -4438,6 +4461,7 @@ void menu_input_dialog_end(void)
    struct menu_state *menu_st                 = &menu_driver_state;
    menu_st->input_dialog_kb_type              = 0;
    menu_st->input_dialog_kb_idx               = 0;
+   menu_st->input_dialog_kb_password          = false;
    menu_st->flags                            &= ~MENU_ST_FLAG_INP_DLG_KB_DISPLAY;
    menu_st->input_dialog_kb_label[0]          = '\0';
    menu_st->input_dialog_kb_label_setting[0]  = '\0';
@@ -8061,6 +8085,7 @@ bool menu_input_dialog_start_search(void)
    steam_open_osk();
 #endif
    menu_st->flags                         |= MENU_ST_FLAG_INP_DLG_KB_DISPLAY;
+   menu_st->input_dialog_kb_password       = false;
    strlcpy(menu_st->input_dialog_kb_label,
          msg_hash_to_str(MENU_ENUM_LABEL_VALUE_SEARCH),
          sizeof(menu_st->input_dialog_kb_label));
@@ -8099,7 +8124,8 @@ bool menu_input_dialog_start_search(void)
    return true;
 }
 
-bool menu_input_dialog_start(menu_input_ctx_line_t *line)
+static bool menu_input_dialog_start_internal(
+      menu_input_ctx_line_t *line, bool password)
 {
    input_driver_state_t *input_st   = input_state_get_ptr();
 #ifdef HAVE_ACCESSIBILITY
@@ -8137,6 +8163,7 @@ bool menu_input_dialog_start(menu_input_ctx_line_t *line)
 
    menu_st->input_dialog_kb_type   = line->type;
    menu_st->input_dialog_kb_idx    = line->idx;
+   menu_st->input_dialog_kb_password = password;
 
    input_keyboard_line_free(input_st);
 
@@ -8170,6 +8197,16 @@ bool menu_input_dialog_start(menu_input_ctx_line_t *line)
    input_st->flags |= INP_FLAG_KB_MAPPING_BLOCKED;
 
    return true;
+}
+
+bool menu_input_dialog_start(menu_input_ctx_line_t *line)
+{
+   return menu_input_dialog_start_internal(line, false);
+}
+
+bool menu_input_dialog_start_password(menu_input_ctx_line_t *line)
+{
+   return menu_input_dialog_start_internal(line, true);
 }
 
 size_t menu_update_fullscreen_thumbnail_label(

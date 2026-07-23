@@ -37,6 +37,6 @@ S_UINT_EX(ai_service_source_lang, AI_SERVICE_SOURCE_LANG,
 S_UINT_EX(ai_service_target_lang, AI_SERVICE_TARGET_LANG,
       "ai_service_target_lang",
       DEFAULT_AI_SERVICE_TARGET_LANG, SD_FLAG_NONE, SDESC_RANGE_MINMAX, 0, TRANSLATION_LANG_DONT_CARE, (TRANSLATION_LANG_LAST-1), 1, 0, setting_action_ok_uint, setting_get_string_representation_uint_ai_service_lang, NULL, NULL, NULL, NULL, 0,
-      "Target Language",
-      "The language the service will translate to. 'Default' is English.")
+      "Output Language",
+      "The language shown or spoken by the translation service. 'Default' is English.")
 #endif

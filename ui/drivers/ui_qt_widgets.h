@@ -349,6 +349,7 @@ private slots:
 private:
    rarch_setting_t *m_setting;
    char *m_value;
+   QString m_values;
 };
 
 class UIntComboBox : public QComboBox

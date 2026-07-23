@@ -7,6 +7,11 @@
 /* Descriptor and configuration rows are #ifdef HAVE_TRANSLATE; the string
  * tables always carry this row via the strings pass. */
 #if defined(HAVE_TRANSLATE) || defined(SETTINGS_DEF_STRINGS_PASS)
+S_ACTION_EX(AI_SERVICE_TOGGLE,
+      "ai_service_toggle",
+      SD_FLAG_NONE, setting_action_ok_ai_service_toggle, NULL, CMD_EVENT_NONE,
+      "Start/Stop Game Translation",
+      "Return to the running game and start translation with the backend, URL, model and languages configured here. Select again to stop continuous translation.")
 S_UINT_EX(ai_service_mode, AI_SERVICE_MODE,
       "ai_service_mode",
       DEFAULT_AI_SERVICE_MODE, SD_FLAG_NONE, SDESC_RANGE_MINMAX, 0, 0, 2, 1, 0, setting_action_ok_uint, setting_get_string_representation_uint_ai_service_mode, NULL, NULL, NULL, NULL, 0,

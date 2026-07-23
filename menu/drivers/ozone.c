@@ -7311,6 +7311,12 @@ static void ozone_draw_osk(
 
       memcpy(cursor_message, input_st->keyboard_line.buffer, ptr);
       cursor_message[ptr] = '\0';
+      if (menu_input_dialog_is_password())
+      {
+         size_t masked_length = utf8len(cursor_message);
+         memset(cursor_message, '*', masked_length);
+         cursor_message[masked_length] = '\0';
+      }
       (ozone->word_wrap)(cursor_message,
             sizeof(cursor_message),
             cursor_message,
@@ -12622,7 +12628,7 @@ static void ozone_frame(void *data, video_frame_info_t *video_info)
       if (draw_osk)
       {
          const char *label           = menu_st->input_dialog_kb_label;
-         const char *str             = menu_input_dialog_get_buffer();
+         const char *str             = menu_input_dialog_get_display_buffer();
 
          ozone_draw_osk(ozone,
                userdata,

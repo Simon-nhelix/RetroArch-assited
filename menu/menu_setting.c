@@ -699,7 +699,9 @@ static int setting_generic_action_ok_linefeed(
    line.idx           = 0;
    line.cb            = cb;
 
-   if (!menu_input_dialog_start(&line))
+   if (!(setting->ui_type == ST_UI_TYPE_PASSWORD_LINE_EDIT
+         ? menu_input_dialog_start_password(&line)
+         : menu_input_dialog_start(&line)))
       return -1;
    return 0;
 }
@@ -3376,6 +3378,119 @@ static size_t setting_get_string_representation_password(
          return strlcpy(s, "********", len);
       *setting->value.target.string = '\0';
    }
+   return 0;
+}
+#endif
+
+#ifdef HAVE_TRANSLATE
+typedef struct ai_service_model_display
+{
+   const char *id;
+   const char *name;
+   enum msg_hash_enums role;
+} ai_service_model_display_t;
+
+static const ai_service_model_display_t ai_service_model_displays[] = {
+   {"gemini-3.1-flash-lite", "Gemini 3.1 Flash Lite",
+      MSG_AI_SERVICE_MODEL_RECOMMENDED_FAST_SCREEN},
+   {"gemini-3.5-flash-extra-low", "Gemini 3.5 Flash / Extra Low",
+      MSG_AI_SERVICE_MODEL_TESTED_SCREEN},
+   {"gemini-3-flash", "Gemini 3 Flash",
+      MSG_AI_SERVICE_MODEL_TESTED_SCREEN},
+   {"gpt-5.4-mini", "GPT 5.4 / Mini",
+      MSG_AI_SERVICE_MODEL_TESTED_SCREEN},
+   {"gpt-5.6-luna", "GPT 5.6 / Luna profile",
+      MSG_AI_SERVICE_MODEL_TESTED_OCR_TEXT},
+   {"gemini-3.5-flash-low", "Gemini 3.5 Flash / Low",
+      MSG_AI_SERVICE_MODEL_FAST_CANDIDATE_UNTESTED},
+   {"fugu", "Fugu",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"fugu-ultra", "Fugu / Ultra",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"gpt-5.4", "GPT 5.4 / Standard",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"gpt-5.5", "GPT 5.5 / Standard",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"gpt-5.6", "GPT 5.6 / Default",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"gpt-5.6-sol", "GPT 5.6 / Sol profile",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"gpt-5.6-terra", "GPT 5.6 / Terra profile",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"gpt-oss-120b-medium", "GPT OSS 120B / Medium",
+      MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED},
+   {"gpt-5.3-codex-spark", "GPT 5.3 / Codex Spark",
+      MSG_AI_SERVICE_MODEL_CODE_NOT_RECOMMENDED},
+   {"codex-auto-review", "Codex / Auto Review",
+      MSG_AI_SERVICE_MODEL_CODE_NOT_RECOMMENDED},
+   {"kimi-k2.7-code", "Kimi K2.7 / Code",
+      MSG_AI_SERVICE_MODEL_CODE_NOT_RECOMMENDED},
+   {"kimi-k2.7-code-highspeed", "Kimi K2.7 / Code High Speed",
+      MSG_AI_SERVICE_MODEL_CODE_NOT_RECOMMENDED},
+   {"gemini-pro-agent", "Gemini Pro / Agent",
+      MSG_AI_SERVICE_MODEL_AGENT_NOT_RECOMMENDED},
+   {"gemini-3-flash-agent", "Gemini 3 Flash / Agent",
+      MSG_AI_SERVICE_MODEL_AGENT_NOT_RECOMMENDED},
+   {"gpt-image-1.5", "GPT Image 1.5",
+      MSG_AI_SERVICE_MODEL_IMAGE_NOT_TRANSLATION},
+   {"gpt-image-2", "GPT Image 2",
+      MSG_AI_SERVICE_MODEL_IMAGE_NOT_TRANSLATION},
+   {"gemini-3.1-flash-image", "Gemini 3.1 Flash / Image",
+      MSG_AI_SERVICE_MODEL_IMAGE_NOT_TRANSLATION}
+};
+
+static size_t setting_get_string_representation_ai_service_backend(
+      rarch_setting_t *setting, char *s, size_t len)
+{
+   const char *backend;
+
+   if (!setting || !(backend = setting->value.target.string))
+      return 0;
+   if (string_is_equal(backend, "openai"))
+      return strlcpy(s, "OpenAI Vision", len);
+   if (string_is_equal(backend, "apple_ocr_openai"))
+#ifdef HAVE_TRANSLATE_APPLE
+      return strlcpy(s, "Apple OCR + OpenAI", len);
+#else
+      return strlcpy(s, "OpenAI Vision (Apple OCR unavailable)", len);
+#endif
+   if (string_is_equal(backend, "apple"))
+      return strlcpy(s, "Apple On-Device", len);
+   if (string_is_equal(backend, "http"))
+      return strlcpy(s, "HTTP (Legacy)", len);
+   return strlcpy(s, backend, len);
+}
+
+static size_t setting_get_string_representation_ai_service_model(
+      rarch_setting_t *setting, char *s, size_t len)
+{
+   const char *model;
+   size_t i;
+
+   if (!setting || !(model = setting->value.target.string))
+      return 0;
+
+   for (i = 0; i < ARRAY_SIZE(ai_service_model_displays); i++)
+   {
+      const ai_service_model_display_t *display =
+            &ai_service_model_displays[i];
+      if (string_is_equal(model, display->id))
+         return snprintf(s, len, "%s - %s [%s]", display->name,
+               msg_hash_to_str(display->role), display->id);
+   }
+
+   /* Unlike the default path representation, retain provider prefixes in
+    * custom IDs such as "openai/gpt-...". */
+   return strlcpy(s, model, len);
+}
+
+static size_t setting_get_string_representation_ai_service_api_key(
+      rarch_setting_t *setting, char *s, size_t len)
+{
+   if (   setting
+       && setting->value.target.string
+       && setting->value.target.string[0] != '\0')
+      return strlcpy(s, "********", len);
    return 0;
 }
 #endif
@@ -10003,6 +10118,166 @@ static void audio_driver_write_handler(rarch_setting_t *setting)
                     | MENU_ST_FLAG_ENTRIES_NEED_REFRESH;
 }
 
+#ifdef HAVE_TRANSLATE
+static int setting_action_ok_ai_service_toggle(
+      rarch_setting_t *setting, size_t idx, bool wraparound)
+{
+   const char *msg             = NULL;
+   settings_t *settings        = config_get_ptr();
+   runloop_state_t *runloop_st = runloop_state_get_ptr();
+   (void)setting;
+   (void)idx;
+   (void)wraparound;
+
+   if (!settings || !settings->bools.ai_service_enable)
+      msg = msg_hash_to_str(MSG_AI_SERVICE_DISABLED);
+   else if (   !runloop_st
+            || runloop_st->current_core_type == CORE_TYPE_DUMMY
+            || !(runloop_st->flags & RUNLOOP_FLAG_CORE_RUNNING))
+      msg = msg_hash_to_str(MSG_AI_SERVICE_NO_CONTENT);
+
+   if (msg)
+   {
+      RARCH_ERR("[AI Service] %s\n", msg);
+      runloop_msg_queue_push(msg, strlen(msg), 1, 180, true, NULL,
+            MESSAGE_QUEUE_ICON_DEFAULT, MESSAGE_QUEUE_CATEGORY_ERROR);
+      return 0;
+   }
+
+   /* Close the settings menu first. The translation command captures the
+    * cached game frame, so it must run after control has returned to content. */
+   if (!command_event(CMD_EVENT_RESUME, NULL))
+      return -1;
+
+   return command_event(CMD_EVENT_AI_SERVICE_TOGGLE, NULL) ? 0 : -1;
+}
+
+static void ai_service_enable_change_handler(rarch_setting_t *setting)
+{
+   access_state_t *access_st = access_state_get_ptr();
+
+   ai_service_invalidate_translation();
+
+   if (   setting
+       && setting->value.target.boolean
+       && !*setting->value.target.boolean
+       && access_st)
+      access_st->ai_service_auto = 0;
+}
+
+static int setting_string_action_start_input(rarch_setting_t *setting)
+{
+   return setting_generic_action_ok_linefeed(setting, 0, false);
+}
+
+static int setting_string_option_action(rarch_setting_t *setting,
+      bool forward, bool wraparound)
+{
+   const char *token;
+   size_t option_count = 0;
+   size_t current      = (size_t)-1;
+   size_t selected;
+
+   if (!setting || !setting->values || !*setting->values)
+      return -1;
+
+   token = setting->values;
+   while (*token)
+   {
+      const char *end = strchr(token, '|');
+      size_t len      = end ? (size_t)(end - token) : strlen(token);
+
+      if (   strlen(setting->value.target.string) == len
+          && memcmp(setting->value.target.string, token, len) == 0)
+         current = option_count;
+      option_count++;
+      token = end ? end + 1 : token + len;
+   }
+
+   if (current == (size_t)-1)
+      selected = forward ? 0 : option_count - 1;
+   else if (forward)
+      selected = current + 1 < option_count
+            ? current + 1 : (wraparound ? 0 : current);
+   else
+      selected = current > 0
+            ? current - 1 : (wraparound ? option_count - 1 : current);
+
+   token = setting->values;
+   while (selected-- > 0)
+   {
+      const char *end = strchr(token, '|');
+      if (!end)
+         return -1;
+      token = end + 1;
+   }
+
+   {
+      const char *end = strchr(token, '|');
+      size_t len      = end ? (size_t)(end - token) : strlen(token);
+      if (len >= setting->size)
+         len = setting->size - 1;
+      memcpy(setting->value.target.string, token, len);
+      setting->value.target.string[len] = '\0';
+   }
+
+   if (setting->actions->change)
+      setting->actions->change(setting);
+   return 0;
+}
+
+static int setting_string_action_left_options(
+      rarch_setting_t *setting, size_t idx, bool wraparound)
+{
+   (void)idx;
+   return setting_string_option_action(setting, false, wraparound);
+}
+
+static int setting_string_action_right_options(
+      rarch_setting_t *setting, size_t idx, bool wraparound)
+{
+   (void)idx;
+   return setting_string_option_action(setting, true, wraparound);
+}
+
+static void ai_service_backend_write_handler(rarch_setting_t *setting)
+{
+   struct menu_state *menu_st = menu_state_get_ptr();
+   access_state_t *access_st   = access_state_get_ptr();
+   general_write_handler(setting);
+   ai_service_invalidate_translation();
+   if (access_st)
+      access_st->ai_service_auto = 0;
+   ai_service_refresh_models();
+   if (menu_st)
+      menu_st->flags |= MENU_ST_FLAG_PREVENT_POPULATE
+                     | MENU_ST_FLAG_ENTRIES_NEED_REFRESH;
+}
+
+static void ai_service_connection_write_handler(rarch_setting_t *setting)
+{
+   struct menu_state *menu_st = menu_state_get_ptr();
+   general_write_handler(setting);
+   ai_service_invalidate_translation();
+   ai_service_refresh_models();
+   if (menu_st)
+      menu_st->flags |= MENU_ST_FLAG_PREVENT_POPULATE
+                     | MENU_ST_FLAG_ENTRIES_NEED_REFRESH;
+}
+
+static void ai_service_translation_write_handler(rarch_setting_t *setting)
+{
+   general_write_handler(setting);
+   ai_service_invalidate_translation();
+}
+
+static void ai_service_translation_change_handler(rarch_setting_t *setting)
+{
+   (void)setting;
+   ai_service_invalidate_translation();
+}
+#endif
+
 static int setting_record_driver_action_left(
       rarch_setting_t *setting, size_t idx, bool wraparound)
 {
@@ -15649,11 +15924,12 @@ static void settings_build_ai_service(
             &group_info,
             &subgroup_info,
             parent_group,
-            general_write_handler,
+            ai_service_backend_write_handler,
             general_read_handler);
       SETTINGS_ACTION_SET(ok, &(*list)[list_info->index - 1], setting_action_ok_uint)
-      SETTINGS_ACTION_SET(left, &(*list)[list_info->index - 1], setting_string_action_left_driver)
-      SETTINGS_ACTION_SET(right, &(*list)[list_info->index - 1], setting_string_action_right_driver)
+      SETTINGS_ACTION_SET(left, &(*list)[list_info->index - 1], setting_string_action_left_options)
+      SETTINGS_ACTION_SET(right, &(*list)[list_info->index - 1], setting_string_action_right_options)
+      SETTINGS_ACTION_SET(repr, &(*list)[list_info->index - 1], setting_get_string_representation_ai_service_backend)
 
       /* Descriptor holdout: poke tail outside the descriptor grammar. */
       CONFIG_STRING(
@@ -15666,13 +15942,76 @@ static void settings_build_ai_service(
             &group_info,
             &subgroup_info,
             parent_group,
-            general_write_handler,
+            ai_service_connection_write_handler,
             general_read_handler);
       SETTINGS_DATA_LIST_CURRENT_ADD_FLAGS(list, list_info, SD_FLAG_ALLOW_INPUT);
       (*list)[list_info->index - 1].ui_type       = ST_UI_TYPE_STRING_LINE_EDIT;
       SETTINGS_ACTION_SET(start, &(*list)[list_info->index - 1], setting_generic_action_start_default)
 
+      CONFIG_STRING_OPTIONS(
+            list, list_info,
+            settings->arrays.ai_service_model,
+            sizeof(settings->arrays.ai_service_model),
+            MENU_ENUM_LABEL_AI_SERVICE_MODEL,
+            MENU_ENUM_LABEL_VALUE_AI_SERVICE_MODEL,
+            DEFAULT_AI_SERVICE_MODEL,
+            strdup(config_get_ai_service_model_options()),
+            &group_info,
+            &subgroup_info,
+            parent_group,
+            ai_service_translation_write_handler,
+            general_read_handler);
+      SETTINGS_DATA_LIST_CURRENT_ADD_FLAGS(list, list_info, SD_FLAG_ALLOW_INPUT);
+      SETTINGS_ACTION_SET(ok, &(*list)[list_info->index - 1], setting_action_ok_uint)
+      SETTINGS_ACTION_SET(left, &(*list)[list_info->index - 1], setting_string_action_left_options)
+      SETTINGS_ACTION_SET(right, &(*list)[list_info->index - 1], setting_string_action_right_options)
+      SETTINGS_ACTION_SET(start, &(*list)[list_info->index - 1], setting_string_action_start_input)
+      SETTINGS_ACTION_SET(repr, &(*list)[list_info->index - 1], setting_get_string_representation_ai_service_model)
+
+      CONFIG_STRING_OPTIONS(
+            list, list_info,
+            settings->arrays.ai_service_reasoning_effort,
+            sizeof(settings->arrays.ai_service_reasoning_effort),
+            MENU_ENUM_LABEL_AI_SERVICE_REASONING_EFFORT,
+            MENU_ENUM_LABEL_VALUE_AI_SERVICE_REASONING_EFFORT,
+            DEFAULT_AI_SERVICE_REASONING_EFFORT,
+            strdup("default|low|medium|high|xhigh|max"),
+            &group_info,
+            &subgroup_info,
+            parent_group,
+            ai_service_translation_write_handler,
+            general_read_handler);
+      SETTINGS_ACTION_SET(ok, &(*list)[list_info->index - 1], setting_action_ok_uint)
+      SETTINGS_ACTION_SET(left, &(*list)[list_info->index - 1], setting_string_action_left_options)
+      SETTINGS_ACTION_SET(right, &(*list)[list_info->index - 1], setting_string_action_right_options)
+
+      CONFIG_STRING(
+            list, list_info,
+            settings->arrays.ai_service_api_key,
+            sizeof(settings->arrays.ai_service_api_key),
+            MENU_ENUM_LABEL_AI_SERVICE_API_KEY,
+            MENU_ENUM_LABEL_VALUE_AI_SERVICE_API_KEY,
+            DEFAULT_AI_SERVICE_API_KEY,
+            &group_info,
+            &subgroup_info,
+            parent_group,
+            ai_service_connection_write_handler,
+            general_read_handler);
+      SETTINGS_DATA_LIST_CURRENT_ADD_FLAGS(list, list_info, SD_FLAG_ALLOW_INPUT);
+      (*list)[list_info->index - 1].ui_type       = ST_UI_TYPE_PASSWORD_LINE_EDIT;
+      SETTINGS_ACTION_SET(repr, &(*list)[list_info->index - 1], setting_get_string_representation_ai_service_api_key)
+      SETTINGS_ACTION_SET(start, &(*list)[list_info->index - 1], setting_generic_action_start_default)
+
             ADD_DESC(ai_service_desc_1);
+      SETTINGS_ACTION_SET(change,
+            &(*list)[list_info->index - ARRAY_SIZE(ai_service_desc_1)],
+            ai_service_enable_change_handler)
+      SETTINGS_ACTION_SET(change,
+            &(*list)[list_info->index - ARRAY_SIZE(ai_service_desc_1) + 2],
+            ai_service_translation_change_handler)
+      SETTINGS_ACTION_SET(change,
+            &(*list)[list_info->index - ARRAY_SIZE(ai_service_desc_1) + 3],
+            ai_service_translation_change_handler)
 
 
       GROUP_END();

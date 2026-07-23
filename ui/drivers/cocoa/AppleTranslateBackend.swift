@@ -189,12 +189,48 @@ private struct TextBlock {
     let boundingBox: CGRect  // Normalized coordinates (0-1), origin at bottom-left
 }
 
+/// Pixel fonts in native-resolution game frames can be too small for Vision's
+/// recognizer. Upscale only the image passed to OCR, using nearest-neighbor
+/// sampling so hard pixel edges remain intact. Vision reports normalized
+/// bounding boxes, so these remain valid for the original-size overlay.
+private func makeOCRInputImage(from cgImage: CGImage) -> CGImage {
+    let maximumDimension = 512
+    let longestEdge = max(cgImage.width, cgImage.height)
+
+    guard longestEdge > 0, longestEdge < maximumDimension else {
+        return cgImage
+    }
+
+    let scale = min(2.0, CGFloat(maximumDimension) / CGFloat(longestEdge))
+    let scaledWidth = max(1, Int((CGFloat(cgImage.width) * scale).rounded()))
+    let scaledHeight = max(1, Int((CGFloat(cgImage.height) * scale).rounded()))
+    let colorSpace = CGColorSpaceCreateDeviceRGB()
+
+    guard let context = CGContext(
+        data: nil,
+        width: scaledWidth,
+        height: scaledHeight,
+        bitsPerComponent: 8,
+        bytesPerRow: scaledWidth * 4,
+        space: colorSpace,
+        bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+    ) else {
+        return cgImage
+    }
+
+    context.interpolationQuality = .none
+    context.draw(cgImage, in: CGRect(x: 0, y: 0,
+                                     width: scaledWidth, height: scaledHeight))
+    return context.makeImage() ?? cgImage
+}
+
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, *)
 private func performOCR(cgImage: CGImage, sourceLanguage: String?) throws -> [TextBlock] {
     var results: [TextBlock] = []
     var ocrError: Error?
+    let ocrImage = makeOCRInputImage(from: cgImage)
 
-    logTranslation("[Translation] OCR input: \(cgImage.width)x\(cgImage.height), sourceLanguage=\(sourceLanguage ?? "auto")")
+    logTranslation("[Translation] OCR input: \(cgImage.width)x\(cgImage.height) -> \(ocrImage.width)x\(ocrImage.height), sourceLanguage=\(sourceLanguage ?? "auto")")
 
     let request = VNRecognizeTextRequest { request, error in
         if let error = error {
@@ -225,9 +261,11 @@ private func performOCR(cgImage: CGImage, sourceLanguage: String?) throws -> [Te
 
     if let lang = sourceLanguage {
         request.recognitionLanguages = [lang]
+    } else if #available(macOS 13.0, iOS 16.0, tvOS 16.0, *) {
+        request.automaticallyDetectsLanguage = true
     }
 
-    let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+    let handler = VNImageRequestHandler(cgImage: ocrImage, options: [:])
     try handler.perform([request])
 
     if let error = ocrError {

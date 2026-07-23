@@ -1,0 +1,27 @@
+{
+  "settings": {
+    "auto_apply": false
+  },
+  "games": {
+    "2d1766e9": {
+      "rom": "Splatterhouse 2 (USA).md",
+      "core": "genesis_plus_gx",
+      "crc32": "2d1766e9",
+      "cheats": [
+        {
+          "id": "god-mode",
+          "name": "무적 (철력 4 고정)",
+          "address": "0xf6",
+          "value": 4,
+          "size": 1,
+          "endian": "little",
+          "mode": "freeze",
+          "interval": 0.1,
+          "enabled": true,
+          "notes": "WRAM 0x00f6 = 철력 하트 개수. 쓰기로 화면 즉시 반영 확인. 게임이 덮어쓰지 않는 진짜 변수라 프리즈가 잘 먹힘.",
+          "updated_at": 1752950000.0
+        }
+      ]
+    }
+  }
+}

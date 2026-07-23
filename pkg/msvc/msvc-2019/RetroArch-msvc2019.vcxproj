@@ -165,6 +165,7 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <Import Project="..\RetroArch.WindowsTLS.props" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Platform)'=='Win32'">
     <LibraryPath>$(DXSDK_DIR)Lib\x86;$(LibraryPath)</LibraryPath>

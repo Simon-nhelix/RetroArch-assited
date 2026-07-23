@@ -5649,14 +5649,15 @@ void core_options_flush(void)
          MESSAGE_QUEUE_ICON_DEFAULT, category);
 }
 
-void runloop_msg_queue_push(
+static void runloop_msg_queue_push_internal(
       const char *msg,
       size_t len,
       unsigned prio, unsigned duration,
       bool flush,
       char *title,
       enum message_queue_icon icon,
-      enum message_queue_category category)
+      enum message_queue_category category,
+      bool narrate)
 {
 #if defined(HAVE_GFX_WIDGETS)
    dispgfx_widget_t *p_dispwidget = dispwidget_get_ptr();
@@ -5670,9 +5671,13 @@ void runloop_msg_queue_push(
 #endif
    runloop_state_t *runloop_st    = &runloop_state;
 
+#ifndef HAVE_ACCESSIBILITY
+   (void)narrate;
+#endif
+
    RUNLOOP_MSG_QUEUE_LOCK(runloop_st);
 #ifdef HAVE_ACCESSIBILITY
-   if (is_accessibility_enabled(
+   if (narrate && is_accessibility_enabled(
             accessibility_enable,
             access_st->enabled))
       accessibility_speak_priority(
@@ -5719,6 +5724,32 @@ void runloop_msg_queue_push(
          msg, prio, duration, flush);
 
    RUNLOOP_MSG_QUEUE_UNLOCK(runloop_st);
+}
+
+void runloop_msg_queue_push(
+      const char *msg,
+      size_t len,
+      unsigned prio, unsigned duration,
+      bool flush,
+      char *title,
+      enum message_queue_icon icon,
+      enum message_queue_category category)
+{
+   runloop_msg_queue_push_internal(msg, len, prio, duration,
+         flush, title, icon, category, true);
+}
+
+void runloop_msg_queue_push_no_narrator(
+      const char *msg,
+      size_t len,
+      unsigned prio, unsigned duration,
+      bool flush,
+      char *title,
+      enum message_queue_icon icon,
+      enum message_queue_category category)
+{
+   runloop_msg_queue_push_internal(msg, len, prio, duration,
+         flush, title, icon, category, false);
 }
 
 #ifdef HAVE_MENU

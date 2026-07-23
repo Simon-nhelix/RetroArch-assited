@@ -655,6 +655,9 @@ static void net_http_conn_pool_free(struct conn_pool_entry *entry)
    {
       ssl_socket_close(entry->ssl_ctx);
       ssl_socket_free(entry->ssl_ctx);
+      /* SSL backends own and close the socket. Do not close the same
+       * descriptor again below: another thread may already have reused it. */
+      entry->fd = -1;
    }
 #endif
    if (entry->fd >= 0)

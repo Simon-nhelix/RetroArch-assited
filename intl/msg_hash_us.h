@@ -19420,7 +19420,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_AI_SERVICE_BACKEND,
-   "Select which translation backend to use. HTTP uses a remote server at the configured URL. Apple uses on-device OCR and translation (macOS/iOS)."
+   "Select the translation backend. HTTP uses the existing image translation API. OpenAI Vision sends the game frame to a remote vision model. Apple OCR + OpenAI reads text with Apple Vision, then sends only text and game context to the selected remote model. Apple On-Device uses local OCR and translation (macOS/iOS)."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_AI_SERVICE_URL,
@@ -19428,7 +19428,43 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_AI_SERVICE_URL,
-   "An http:// URL pointing to the translation service to use."
+   "Translation service URL. For OpenAI, enter a local CLIProxy base URL such as http://127.0.0.1:8317/v1 or https://openrouter.ai/api/v1."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_AI_SERVICE_MODEL,
+   "ai_service_model"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AI_SERVICE_MODEL,
+   "Model"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_AI_SERVICE_MODEL,
+   "Recommended translation models appear first. Labels distinguish tested screen/OCR models from general, coding, agent and image-generation models. 'Untested' means the endpoint did not report capabilities. Press Start to enter any raw model ID."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_AI_SERVICE_REASONING_EFFORT,
+   "ai_service_reasoning_effort"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AI_SERVICE_REASONING_EFFORT,
+   "Reasoning Effort"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_AI_SERVICE_REASONING_EFFORT,
+   "Choose how much reasoning the selected remote model uses. 'default' omits the parameter; 'low' is recommended for fast game translation."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_AI_SERVICE_API_KEY,
+   "ai_service_api_key"
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_AI_SERVICE_API_KEY,
+   "API Key"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_AI_SERVICE_API_KEY,
+   "Optional API key for an OpenAI-compatible service. Leave blank when a local proxy does not require one."
    )
 /* GENERATED REGION: AI service options group (see settings_def_ai_service_options.h). */
 #define SETTINGS_DEF_STRINGS_PASS
@@ -35672,8 +35708,48 @@ MSG_HASH(
    "RetroArch accessibility on.  Main Menu Load Core."
    )
 MSG_HASH(
+   MSG_AI_SERVICE_DISABLED,
+   "AI Service is disabled. Enable it before starting game translation."
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_NO_CONTENT,
+   "No game is running. Load content before starting game translation."
+   )
+MSG_HASH(
    MSG_AI_SERVICE_STOPPED,
    "stopped."
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_RECOMMENDED_FAST_SCREEN,
+   "Recommended / Fast screen translation"
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_TESTED_SCREEN,
+   "Tested / Screen translation"
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_TESTED_OCR_TEXT,
+   "Tested / OCR text translation"
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_FAST_CANDIDATE_UNTESTED,
+   "Fast candidate / Untested"
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_GENERAL_UNTESTED,
+   "General model / Untested"
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_AGENT_NOT_RECOMMENDED,
+   "Agent model / Not recommended"
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_CODE_NOT_RECOMMENDED,
+   "Coding model / Not recommended"
+   )
+MSG_HASH(
+   MSG_AI_SERVICE_MODEL_IMAGE_NOT_TRANSLATION,
+   "Image generation / Not for translation"
    )
 #ifdef HAVE_GAME_AI
 MSG_HASH(
