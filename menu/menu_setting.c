@@ -3449,7 +3449,11 @@ static size_t setting_get_string_representation_ai_service_backend(
    if (string_is_equal(backend, "openai"))
       return strlcpy(s, "OpenAI Vision", len);
    if (string_is_equal(backend, "apple_ocr_openai"))
+#ifdef HAVE_TRANSLATE_APPLE
       return strlcpy(s, "Apple OCR + OpenAI", len);
+#else
+      return strlcpy(s, "OpenAI Vision (Apple OCR unavailable)", len);
+#endif
    if (string_is_equal(backend, "apple"))
       return strlcpy(s, "Apple On-Device", len);
    if (string_is_equal(backend, "http"))

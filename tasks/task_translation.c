@@ -75,7 +75,9 @@ const char *config_get_ai_service_backend_options(void)
 #ifdef HAVE_TRANSLATE_APPLE
    return "http|openai|apple_ocr_openai|apple";
 #else
-   return "http|openai";
+   /* Keep cross-platform configs portable. Builds without the local Apple
+    * OCR module execute this hybrid choice as OpenAI Vision instead. */
+   return "http|openai|apple_ocr_openai";
 #endif
 }
 
@@ -244,6 +246,14 @@ static translation_driver_t *translation_driver_find(const char *ident)
       if (string_is_equal(translation_drivers[i]->ident, ident))
          return translation_drivers[i];
    }
+#ifndef HAVE_TRANSLATE_APPLE
+   /* apple_ocr_openai is a performance optimisation of the OpenAI-compatible
+    * path, not a distinct wire protocol. Falling back here keeps a config
+    * created by an Apple-enabled build functional everywhere, and avoids the
+    * old unsafe behaviour of sending it to the legacy HTTP protocol. */
+   if (string_is_equal(ident, "apple_ocr_openai"))
+      return &openai_translation_driver;
+#endif
    return NULL;
 }
 
@@ -2194,11 +2204,8 @@ void ai_service_refresh_models(void)
    if (!settings
          || !settings->bools.ai_service_enable
          || !(string_is_equal(settings->arrays.ai_service_backend, "openai")
-#ifdef HAVE_TRANSLATE_APPLE
             || string_is_equal(settings->arrays.ai_service_backend,
-                  "apple_ocr_openai")
-#endif
-            )
+                  "apple_ocr_openai"))
          || !openai_build_api_url(settings->arrays.ai_service_url, true,
                models_url, sizeof(models_url)))
       return;
