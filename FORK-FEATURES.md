@@ -11,8 +11,19 @@ In-game text translation using on-device OCR (Apple Vision on macOS) and any
 OpenAI-compatible chat endpoint (local or remote LLM).
 
 - Commits: `5f3ff33d5b` (routing), `aeea40f552` (Apple OCR workflow),
-  `d47573969f` (model picker), `a6e9737dfc` (Windows desktop support)
+  `d47573969f` (model picker), `a6e9737dfc` (Windows desktop support),
+  `f4ac8eb6ba` (portable `apple_ocr_openai` backend), `50c713f933`
+  (Makefile Apple Translate dylib build/bundle)
 - Configure under Settings > AI Service.
+- The `apple_ocr_openai` backend is offered on every build. Builds without
+  the local Apple OCR module (non-macOS, or macOS without `swiftc`) execute
+  it as plain OpenAI Vision, so configs travel between platforms.
+- macOS commandline (`make` / `make bundle`) builds compile the Swift
+  backend (`AppleTranslateBackend.swift`) into
+  `libAppleTranslateBackend.dylib` automatically on arm64 when
+  `xcrun swiftc` is available, and bundle + ad-hoc sign it inside
+  `Contents/Frameworks`. Intel builds can opt in with
+  `HAVE_TRANSLATE_APPLE=1` (requires macOS 10.15+ deployment).
 
 ## 2. Trainer-friendly network commands (memory access for any core)
 
@@ -72,3 +83,6 @@ without launching RetroArch.
   flickers constantly.
 - Non-Metal builds link QuartzCore explicitly (commit `a37b8f021b`, which
   also fixes the kiosk-mode lockout item visibility).
+- `make bundle` copies `media/retroarch.icns` into the bundle and declares
+  `CFBundleIconFile`, so commandline bundles get the app icon automatically
+  (commit `50c713f933`).
