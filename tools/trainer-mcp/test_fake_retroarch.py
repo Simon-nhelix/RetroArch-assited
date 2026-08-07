@@ -90,6 +90,7 @@ def call(proc, name, args):
 
 
 DB_PATH = "/tmp/retroarch-trainer-test-cheats.json"
+NOTES_PATH = "/tmp/retroarch-trainer-test-notes.md"
 
 
 def main():
@@ -99,9 +100,12 @@ def main():
 
     if __import__("os").path.exists(DB_PATH):
         __import__("os").unlink(DB_PATH)
+    if __import__("os").path.exists(NOTES_PATH):
+        __import__("os").unlink(NOTES_PATH)
     env = dict(**__import__("os").environ,
                RETROARCH_CMD_PORT=str(PORT),
-               RETROARCH_TRAINER_CHEATS=DB_PATH)
+               RETROARCH_TRAINER_CHEATS=DB_PATH,
+               RETROARCH_TRAINER_NOTES=NOTES_PATH)
     server_py = __import__("os").path.join(
         __import__("os").path.dirname(__import__("os").path.abspath(__file__)),
         "retroarch_mcp.py")
@@ -261,6 +265,41 @@ def main():
     aa, err = call(proc, "retroarch_auto_apply", {"enabled": False})
     assert not err and not aa["enabled"], aa
     print("auto_apply toggle OK")
+
+    # --- per-game knowledge notes ---
+    gn, err = call(proc, "retroarch_game_note", {"action": "show"})
+    assert not err and gn["notes"] is None, gn
+    print("game_note show OK: empty for unknown game")
+
+    gn, err = call(proc, "retroarch_game_note",
+                   {"action": "add",
+                    "note": "골드 16-bit LE at 0x1234 (snes9x WRAM)"})
+    assert not err and gn["new_section"], gn
+    assert "deadc0de" in gn["section"] or "Chrono Trigger" in gn["section"], gn
+    print(f"game_note add OK: new section {gn['section']!r}")
+
+    gn, err = call(proc, "retroarch_game_note",
+                   {"action": "add", "note": "두번째 노트"})
+    assert not err and not gn["new_section"], gn
+    print("game_note add OK: appended to existing section")
+
+    gn, err = call(proc, "retroarch_game_note", {"action": "show"})
+    assert not err and "0x1234" in gn["notes"] and "두번째 노트" in gn["notes"], gn
+    print("game_note show OK: both notes present")
+
+    # get_status now carries known_notes + enriched saved_cheats
+    st2, err = call(proc, "retroarch_get_status", {})
+    assert not err and "known_notes" in st2, st2
+    assert "0x1234" in st2["known_notes"], st2["known_notes"]
+    rich = [c for c in st2["saved_cheats"] if c["id"] == "rich"]
+    assert rich and rich[0]["address"] == "0x1234" and rich[0]["value"] == 9999, st2
+    print("get_status OK: known_notes + saved_cheats details attached")
+
+    # notes file persisted on disk with crc32 marker
+    with open(NOTES_PATH, encoding="utf-8") as f:
+        md = f.read()
+    assert "crc32: `deadc0de`" in md and "0x1234" in md, md
+    print("known_addresses.md persistence OK")
 
     proc.stdin.close()
     proc.wait(timeout=5)

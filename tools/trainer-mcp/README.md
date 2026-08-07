@@ -52,10 +52,19 @@ pi 재시작 후 `retroarch_*` 도구 사용 가능.
 | `retroarch_freeze` | 저장 안 하는 즉석 프리저 start/stop/list |
 | `retroarch_auto_apply` | **자동 적용 watcher** 켜기/끄기(영구 저장). 켜두면 게임 시작을 감지해서 저장된 치트를 자동 적용하고 이전 게임 프리저는 해제 |
 
+### 게임별 지식 노트 (v0.3)
+| 도구 | 역할 |
+|---|---|
+| `retroarch_game_note` | 게임별 지식 노트(`known_addresses.md`, crc32 매칭) 읽기(`show`)/추가(`add`). 발굴 추론, 미확정 후보, 코어별 주의사항, 공략 힌트를 날짜 붙여 축적 |
+
+`retroarch_get_status`는 현재 게임의 `saved_cheats`(주소/값/모드 포함)와
+`known_notes`(해당 게임 섹션 전체)를 응답에 자동으로 포함한다 — 게임을 켜면
+AI가 재발굴 없이 이전 지식을 바로 이어받는다.
+
 ### 기본 메모리/제어
 | 도구 | 역할 |
 |---|---|
-| `retroarch_get_status` | 실행 중 게임 (시스템, ROM명, crc32) + **저장된 치트 목록도 같이 표시** |
+| `retroarch_get_status` | 실행 중 게임 (시스템, ROM명, crc32) + **저장된 치트와 지식 노트도 같이 표시** |
 | `retroarch_read_memory` | 라이브 메모리 헥스 덤프 (구조 분석용) |
 | `retroarch_write_memory` | 메모리 쓰기 (쓰기 전 save_state 권장) |
 | `retroarch_screenshot` | 스크린샷 찍고 PNG 경로 반환 (AI가 눈으로 확인) |
@@ -95,6 +104,8 @@ pi 재시작 후 `retroarch_*` 도구 사용 가능.
 ## 환경변수
 
 - `RETROARCH_CMD_HOST` / `RETROARCH_CMD_PORT` (기본 127.0.0.1:55355)
+- `RETROARCH_TRAINER_CHEATS` (치트 DB 경로, 기본 `cheats.json`)
+- `RETROARCH_TRAINER_NOTES` (지식 노트 경로, 기본 `known_addresses.md`)
 - `RETROARCH_SCREENSHOT_DIR`
 - `RETROARCH_CMD_TIMEOUT` (UDP 응답 대기 초, 기본 0.8)
 

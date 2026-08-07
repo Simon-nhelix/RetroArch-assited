@@ -40,10 +40,15 @@ MAX_SCAN_CANDIDATES_SHOWN = 40
 CHEATS_PATH = os.environ.get(
     "RETROARCH_TRAINER_CHEATS",
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "cheats.json"))
+NOTES_PATH = os.environ.get(
+    "RETROARCH_TRAINER_NOTES",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 "known_addresses.md"))
+MAX_NOTES_IN_STATUS = 4000  # cap known_notes size in get_status replies
 AUTO_APPLY_POLL_SEC = 2.0
 
 SERVER_NAME = "retroarch-trainer"
-SERVER_VERSION = "0.2.0"
+SERVER_VERSION = "0.3.0"
 SUPPORTED_PROTOCOL_VERSIONS = ["2024-11-05", "2025-03-26", "2025-06-18"]
 
 STATE = {
@@ -245,6 +250,107 @@ def cheat_db_game_entry(ident, create=False):
 def slugify(name):
     s = re.sub(r"[^0-9a-zA-Z가-힣]+", "-", str(name)).strip("-").lower()
     return s or "cheat"
+
+# ---------------------------------------------------------------------------
+# Per-game knowledge notes (known_addresses.md)
+# ---------------------------------------------------------------------------
+
+NOTES_LOCK = threading.Lock()
+_CRC_RE = re.compile(r"crc32:\s*`?([0-9a-fA-F]{8})`?")
+
+
+def notes_split_sections(text):
+    """Split notes markdown into (preamble_lines, [[header, body_lines]]).
+    A section starts at a '## ' header; '### ' stays inside the body."""
+    preamble, sections, current = [], [], None
+    for line in text.splitlines():
+        if line.startswith("## "):
+            current = [line, []]
+            sections.append(current)
+        elif current is not None:
+            current[1].append(line)
+        else:
+            preamble.append(line)
+    return preamble, sections
+
+
+def notes_find_section(sections, ident):
+    """Index of the section matching ident (crc32 first, then rom name
+    substring in the header), or None."""
+    crc = (ident or {}).get("crc32")
+    rom = (ident or {}).get("rom")
+    if crc:
+        for i, (_header, body) in enumerate(sections):
+            for line in body:
+                m = _CRC_RE.search(line)
+                if m and m.group(1).lower() == crc:
+                    return i
+    if rom:
+        rom_l = rom.lower()
+        for i, (header, _body) in enumerate(sections):
+            if rom_l in header.lower():
+                return i
+    return None
+
+
+def game_notes_read(ident):
+    """Returns the markdown section matching the game, or None."""
+    try:
+        with open(NOTES_PATH, "r", encoding="utf-8") as f:
+            text = f.read()
+    except OSError:
+        return None
+    _pre, sections = notes_split_sections(text)
+    idx = notes_find_section(sections, ident)
+    if idx is None:
+        return None
+    header, body = sections[idx]
+    return "\n".join([header] + body).strip()
+
+
+def game_notes_append(ident, note):
+    """Appends a dated bullet to the game's section (created if missing).
+    Returns (section_header, created_new_section)."""
+    with NOTES_LOCK:
+        try:
+            with open(NOTES_PATH, "r", encoding="utf-8") as f:
+                text = f.read()
+        except OSError:
+            text = ("# Known Memory Addresses (per game)\n\n"
+                    "트레이너 실험으로 발굴한 주소/공략 노트 모음. "
+                    "GET_STATUS의 crc32로 게임 식별.\n")
+        preamble, sections = notes_split_sections(text)
+        dated = f"- ({time.strftime('%Y-%m-%d')}) {note}"
+        idx = notes_find_section(sections, ident)
+        created = False
+        if idx is None:
+            created = True
+            header = f"## {ident.get('rom') or ident.get('key') or 'unknown game'}"
+            body = []
+            if ident.get("crc32"):
+                body.append(f"- crc32: `{ident['crc32']}`")
+            if ident.get("core"):
+                body.append(f"- core: {ident['core']}")
+            body += ["", dated]
+            sections.append([header, body])
+            idx = len(sections) - 1
+        else:
+            body = sections[idx][1]
+            while body and not body[-1].strip():
+                body.pop()
+            body.append(dated)
+        out = list(preamble)
+        if out and out[-1].strip():
+            out.append("")
+        for header, body in sections:
+            out.append(header)
+            out.extend(body)
+            out.append("")
+        tmp = NOTES_PATH + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            f.write("\n".join(out).rstrip() + "\n")
+        os.replace(tmp, NOTES_PATH)
+        return sections[idx][0], created
 
 # ---------------------------------------------------------------------------
 # In-process freezer (freeze = rewrite a value in a loop)
@@ -481,11 +587,43 @@ def tool_get_status(_args):
         if entry:
             out["saved_cheats"] = [
                 {"id": c.get("id"), "name": c.get("name"),
-                 "mode": c.get("mode"), "enabled": c.get("enabled", True)}
+                 "address": c.get("address"), "value": c.get("value"),
+                 "size": c.get("size"), "mode": c.get("mode"),
+                 "enabled": c.get("enabled", True),
+                 "notes": c.get("notes")}
                 for c in entry.get("cheats", [])]
+        notes = game_notes_read(ident)
+        if notes:
+            if len(notes) > MAX_NOTES_IN_STATUS:
+                notes = (notes[:MAX_NOTES_IN_STATUS] +
+                         "\n... (truncated; full text in known_addresses.md)")
+            out["known_notes"] = notes
+            out["known_notes_source"] = NOTES_PATH
     if version:
         out["retroarch_version"] = version.strip()
     return out
+
+
+def tool_game_note(args):
+    action = str(args.get("action", "show")).lower()
+    ident, err = current_game()
+    if err:
+        return {"error": err}
+    if action == "show":
+        notes = game_notes_read(ident)
+        if notes is None:
+            return {"game": ident, "notes": None,
+                    "hint": "no notes yet for this game; "
+                            "use action='add' to record discoveries"}
+        return {"game": ident, "notes": notes, "source": NOTES_PATH}
+    if action == "add":
+        note = str(args.get("note", "")).strip()
+        if not note:
+            return {"error": "missing 'note'"}
+        header, created = game_notes_append(ident, note)
+        return {"game": ident, "added": note, "section": header,
+                "new_section": created, "source": NOTES_PATH}
+    return {"error": f"unknown action: {action!r} (use 'show' or 'add')"}
 
 
 def tool_command(args):
@@ -1017,9 +1155,13 @@ TOOLS = [
     {
         "name": "retroarch_get_status",
         "description": "Get the currently running game: state (PLAYING/PAUSED), "
-                       "core/system id, rom filename and crc32. Use the game "
-                       "name to recall known memory maps, cheat codes or "
-                       "encodings for that game.",
+                       "core/system id, rom filename and crc32. The reply also "
+                       "includes everything already known about this game: "
+                       "'saved_cheats' (address/value/mode from cheats.json) "
+                       "and 'known_notes' (discovered memory addresses, core "
+                       "quirks and hints from known_addresses.md). Use the "
+                       "game name to recall additional known memory maps, "
+                       "cheat codes or encodings for that game.",
         "inputSchema": {"type": "object", "properties": {}},
     },
     {
@@ -1337,6 +1479,29 @@ TOOLS = [
         },
     },
     {
+        "name": "retroarch_game_note",
+        "description": "Read or append per-game knowledge notes stored in "
+                       "known_addresses.md (matched by rom crc32). Use "
+                       "action='show' to read every discovered address, "
+                       "core quirk and walkthrough hint for the running "
+                       "game; use action='add' with 'note' to record a new "
+                       "finding (dated bullet, section auto-created). "
+                       "retroarch_get_status already includes these notes "
+                       "as 'known_notes' - add to them whenever you "
+                       "confirm something new so the next session starts "
+                       "with full knowledge.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "action": {"type": "string",
+                           "enum": ["show", "add"],
+                           "default": "show"},
+                "note": {"type": "string",
+                         "description": "note text for action='add'"},
+            },
+        },
+    },
+    {
         "name": "retroarch_command",
         "description": "Send a raw RetroArch network command (e.g. RESET, "
                        "FAST_FORWARD, MENU_TOGGLE, CHEAT_TOGGLE). Prefer the "
@@ -1371,6 +1536,7 @@ TOOL_FUNCS = {
     "retroarch_cheat_apply": tool_cheat_apply,
     "retroarch_freeze": tool_freeze,
     "retroarch_auto_apply": tool_auto_apply,
+    "retroarch_game_note": tool_game_note,
     "retroarch_command": tool_command,
 }
 
@@ -1404,7 +1570,11 @@ def handle_request(msg):
             "instructions": (
                 "You are a game-trainer copilot driving RetroArch. Workflow: "
                 "1) retroarch_get_status to learn the game; it also lists "
-                "cheats already saved for it - offer retroarch_cheat_apply. "
+                "cheats already saved for it ('saved_cheats') and all notes "
+                "previously discovered for it ('known_notes': memory "
+                "addresses, core quirks, hints) - offer "
+                "retroarch_cheat_apply and build on the notes instead of "
+                "re-discovering. "
                 "2) To find a NEW value: retroarch_scan_start (use the "
                 "visible value and size 2 for 16-bit consoles when known), "
                 "then ask the user to change it in-game and narrow with "
@@ -1417,7 +1587,10 @@ def handle_request(msg):
                 "6) ALWAYS save confirmed addresses with retroarch_cheat_add "
                 "(mode 'freeze' for god-mode style) so they persist per game "
                 "in cheats.json and can be re-applied next session or by the "
-                "auto-apply watcher. Reason about endianness, BCD and "
+                "auto-apply watcher. Record reasoning, unconfirmed candidates "
+                "and walkthrough hints with retroarch_game_note action='add' "
+                "so they show up in get_status next time. "
+                "Reason about endianness, BCD and "
                 "multi-byte values when searching."),
         })
 
