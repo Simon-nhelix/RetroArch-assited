@@ -1292,8 +1292,8 @@ static INLINE int rvp9_rp2(int v, int n)   /* ROUND_POWER_OF_TWO */
    return (v + (1 << (n - 1))) >> n;
 }
 
-static void rvp9_iht_add(const rvp9_tran *input, RVP9_PIXEL *dst, int stride,
-      int tx_size, int tx_type, int eob)
+static void rvp9_iht_add(rvp9_dec *d, const rvp9_tran *input,
+      RVP9_PIXEL *dst, int stride, int tx_size, int tx_type, int eob)
 {
    static const rvp9_tx1d row1d[4][4] = {
       { rvp9_idct4, rvp9_idct4, rvp9_iadst4, rvp9_iadst4 },
@@ -1307,7 +1307,9 @@ static void rvp9_iht_add(const rvp9_tran *input, RVP9_PIXEL *dst, int stride,
       { rvp9_idct16, rvp9_iadst16, rvp9_idct16, rvp9_iadst16 },
       { rvp9_idct32, rvp9_idct32, rvp9_idct32, rvp9_idct32 }
    };
-   rvp9_tran out[32 * 32], tmpi[32], tmpo[32];
+   /* 4 KiB at 32x32: held in rvp9_dec, not on the stack. */
+   rvp9_tran *out = d->iht_scratch;
+   rvp9_tran tmpi[32], tmpo[32];
    int n = 4 << tx_size;
    int shift = (tx_size == 0) ? 4 : (tx_size == 1) ? 5 : 6;
    int i, j;
@@ -2237,7 +2239,7 @@ modes_done:
                   if (d->hd.lossless)
                      rvp9_iwht4x4_add(d->dqcoeff, dst, stride);
                   else
-                     rvp9_iht_add(d->dqcoeff, dst, stride, tx_size,
+                     rvp9_iht_add(d, d->dqcoeff, dst, stride, tx_size,
                         tx_type, eob);
                }
             }
@@ -2362,10 +2364,33 @@ static int rvp9_decode_frame_impl(rvp9_dec *d, const uint8_t *data,
    d->tile_col_start = 0;             /* set per tile before decoding  */
    d->tile_col_end   = d->mi_cols;
 
-   /* allocate on first frame (fixed dims thereafter) */
-   if (!d->buf_y)
+   /* Allocate on the first frame, and again whenever the geometry
+    * changes.  A key or intra-only frame may legitimately carry
+    * dimensions different from the last one, and mi_cols/mi_rows were
+    * just taken from its header; everything below is sized from them,
+    * so buffers held over from a smaller picture would be written past
+    * their end.  Inter frames cannot get here with new dimensions -
+    * the reference size check above rejects them. */
+   if (!d->buf_y || d->alloc_mi_cols != d->mi_cols
+         || d->alloc_mi_rows != d->mi_rows)
    {
       size_t ysz, uvsz;
+      /* release the previous geometry; the reference frames sized for
+       * it go with it, so the whole map is invalidated */
+      for (i = 0; i < RVP9_FRAME_BUFS; i++)
+      {
+         free(d->fbs[i].y); free(d->fbs[i].u); free(d->fbs[i].v);
+         d->fbs[i].y = d->fbs[i].u = d->fbs[i].v = NULL;
+         d->fbs[i].valid = 0;
+         d->fbs[i].ref_count = 0;
+      }
+      free(d->mi);        d->mi = NULL;
+      free(d->prev_mvs);  d->prev_mvs = NULL;
+      free(d->cur_mvs);   d->cur_mvs = NULL;
+      free(d->above_seg); d->above_seg = NULL;
+      for (i = 0; i < 3; i++)
+      { free(d->above_ctx[i]); d->above_ctx[i] = NULL; }
+      d->buf_y = d->buf_u = d->buf_v = NULL;
       d->ys  = (d->mi_cols * 8) + 64;
       d->uvs = (d->mi_cols * 4) + 32;
       ysz  = (size_t)d->ys * (d->mi_rows * 8 + 64);
@@ -2392,6 +2417,8 @@ static int rvp9_decode_frame_impl(rvp9_dec *d, const uint8_t *data,
          return -7;
       for (i = 0; i < 8; i++) d->ref_frame_map[i] = -1;
       d->new_fb = -1;
+      d->alloc_mi_cols = d->mi_cols;
+      d->alloc_mi_rows = d->mi_rows;
    }
 
    /* pick a free frame buffer for this frame */
@@ -6188,11 +6215,16 @@ static void rvp9_convolve_vert(const RVP9_PIXEL *src, int src_stride,
 }
 
 /* vpx_convolve8_c: horiz into temp, then vert. */
-static void rvp9_convolve8(const RVP9_PIXEL *src, int src_stride, RVP9_PIXEL *dst,
+static void rvp9_convolve8(rvp9_dec *d, const RVP9_PIXEL *src,
+      int src_stride, RVP9_PIXEL *dst,
       int dst_stride, const int16_t (*kernel)[8], int x0_q4, int x_step_q4,
       int y0_q4, int y_step_q4, int w, int h, int avg)
 {
-   RVP9_PIXEL temp[64 * 135];
+   /* 8.5 KiB (8-bit) / 17 KiB (10-bit) intermediate: held in rvp9_dec,
+    * not on the stack -- this sits beneath rvp9_build_inter_pred on
+    * targets with 8 KiB thread stacks.  Distinct from mc_scratch,
+    * which is live (as this function's source) at the same time. */
+   RVP9_PIXEL *temp = (RVP9_PIXEL *)d->convolve_scratch;
    const int ih =
       (((h - 1) * y_step_q4 + y0_q4) >> RVP9_SUBPEL_BITS) + RVP9_SUBPEL_TAPS;
    rvp9_convolve_horiz(src - src_stride * (RVP9_SUBPEL_TAPS / 2 - 1),
@@ -6202,12 +6234,13 @@ static void rvp9_convolve8(const RVP9_PIXEL *src, int src_stride, RVP9_PIXEL *ds
 }
 
 /* sf->predict dispatch for the unscaled case (xs = ys = 16). */
-static void rvp9_inter_predict(const RVP9_PIXEL *src, int src_stride,
+static void rvp9_inter_predict(rvp9_dec *d, const RVP9_PIXEL *src,
+      int src_stride,
       RVP9_PIXEL *dst, int dst_stride, int subpel_x, int subpel_y,
       int w, int h, int ref, const int16_t (*kernel)[8], int xs, int ys)
 {
    if (subpel_x && subpel_y)
-      rvp9_convolve8(src, src_stride, dst, dst_stride, kernel,
+      rvp9_convolve8(d, src, src_stride, dst, dst_stride, kernel,
          subpel_x, xs, subpel_y, ys, w, h, ref);
    else if (subpel_x)
       rvp9_convolve_horiz(src, src_stride, dst, dst_stride, kernel,
@@ -6324,16 +6357,18 @@ static void rvp9_build_inter_pred(rvp9_dec *d, int plane, int x, int y,
          const int b_w = x1 - x0 + 1;
          const int b_h = y1 - y0 + 1;
          const int border_offset = y_pad * 3 * b_w + x_pad * 3;
-         RVP9_PIXEL mc_buf[80 * 2 * 80 * 2];
+         /* 25 KiB (8-bit) / 50 KiB (10-bit): lives in rvp9_dec, not
+          * here -- this runs on 8 KiB thread stacks on some targets. */
+         RVP9_PIXEL *mc_buf = (RVP9_PIXEL *)d->mc_scratch;
 
          rvp9_build_mc_border(buf_ptr1, buf_stride, mc_buf, b_w,
             x0, y0, b_w, b_h, frame_width, frame_height);
-         rvp9_inter_predict(mc_buf + border_offset, b_w, dst, dst_stride,
-            subpel_x, subpel_y, w, h, ref, kernel, 16, 16);
+         rvp9_inter_predict(d, mc_buf + border_offset, b_w, dst,
+            dst_stride, subpel_x, subpel_y, w, h, ref, kernel, 16, 16);
          return;
       }
    }
-   rvp9_inter_predict(buf_ptr, buf_stride, dst, dst_stride, subpel_x,
+   rvp9_inter_predict(d, buf_ptr, buf_stride, dst, dst_stride, subpel_x,
       subpel_y, w, h, ref, kernel, 16, 16);
 }
 

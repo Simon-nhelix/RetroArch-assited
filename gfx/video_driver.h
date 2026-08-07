@@ -79,7 +79,7 @@
 
 #define VIDEO_DRIVER_GET_HW_CONTEXT_INTERNAL(video_st) (&video_st->hw_render)
 
-#define VIDEO_HAS_FOCUS(video_st) (video_st->current_video->focus ? (video_st->current_video->focus(video_st->data)) : true)
+#define VIDEO_HAS_FOCUS(video_st) ((video_st->current_video && video_st->data && video_st->current_video->focus) ? (video_st->current_video->focus(video_st->data)) : true)
 
 RETRO_BEGIN_DECLS
 
@@ -107,8 +107,13 @@ enum video_driver_state_flags
     * graphics context alive to avoid having to reset all
     * context state. */
    VIDEO_FLAG_CACHE_CONTEXT                       = (1 << 9 ),
-   /* Set to true by driver if context caching succeeded. */
-   VIDEO_FLAG_CACHE_CONTEXT_ACK                   = (1 << 10),
+   /* (1 << 10) was VIDEO_FLAG_CACHE_CONTEXT_ACK.  It was the only bit in
+    * this word written off the main thread -- the context drivers set it
+    * during context reset, which runs on the video thread when threading
+    * is active -- so a non-atomic RMW here from the main thread could
+    * clobber it.  It now lives in an atomic behind the
+    * video_driver_cache_context_ack_* accessors in video_driver.c.
+    * Bit left reserved rather than reused. */
    VIDEO_FLAG_ACTIVE                              = (1 << 11),
    VIDEO_FLAG_STATE_OUT_RGB32                     = (1 << 12),
    VIDEO_FLAG_CRT_SWITCHING_ACTIVE                = (1 << 13),
@@ -389,11 +394,9 @@ typedef struct video_frame_info
    unsigned height;
    unsigned scale_width;
    unsigned scale_height;
-   unsigned xmb_theme;
    unsigned xmb_color_theme;
    unsigned menu_shader_pipeline;
    unsigned materialui_color_theme;
-   unsigned ozone_color_theme;
    unsigned custom_vp_width;
    unsigned custom_vp_height;
    unsigned custom_vp_full_width;
@@ -409,8 +412,6 @@ typedef struct video_frame_info
 
    float menu_wallpaper_opacity;
    float menu_framebuffer_opacity;
-   float menu_header_opacity;
-   float menu_footer_opacity;
    float refresh_rate;
    float font_size;
    float font_msg_pos_x;
@@ -603,14 +604,14 @@ typedef struct gfx_ctx_driver
     * active for this thread. */
    void (*make_current)(bool release);
 
-   /* Optional. Creates and binds a new window surface, destroying the original
-    * window surface if applicable. Returns true on success and false on error.
-    * Currently only for OpenGL. */
+   /* Optional. Creates and binds a replacement window surface without
+    * reinitializing the underlying graphics context/device. Returns true on
+    * success and false on error. */
    bool (*create_surface)(void *data);
 
-   /* Optional. Destroys the current window surface. Returns true on success or
-    * or if there is no currently bound window surface and false on error.
-    * Currently only for OpenGL. */
+   /* Optional. Destroys the current window surface without reinitializing the
+    * underlying graphics context/device. Returns true on success, or if no
+    * window surface is bound, and false on error. */
    bool (*destroy_surface)(void *data);
 } gfx_ctx_driver_t;
 
@@ -1315,6 +1316,23 @@ bool video_driver_texture_unload(uintptr_t *id);
 
 void video_driver_build_info(video_frame_info_t *video_info);
 
+/* Context-cache acknowledgement.  Set by the context driver (video
+ * thread under threaded video), tested and cleared by the main thread.
+ * Kept out of video_driver_state_t so the atomic type is not exposed in
+ * this header: it is included by C++ translation units, where
+ * retro_atomic_int_t is std::atomic<int> rather than the C atomic_int,
+ * which would make the struct layout differ between C and C++ TUs.
+ * _set uses a release RMW and _test an acquire load, so the rebuilt
+ * context is published to the observer. */
+/* Set and/or clear bits of the video driver flag word under
+ * display_lock.  Required for any write that can run concurrently with
+ * video_driver_get_disp_flags(), which task threads call. */
+void video_driver_modify_disp_flags(uint32_t set_bits, uint32_t clear_bits);
+
+void video_driver_cache_context_ack_set(void);
+bool video_driver_cache_context_ack_test(void);
+void video_driver_cache_context_ack_clear(void);
+
 void video_driver_reinit(int flags);
 
 size_t video_driver_get_window_title(char *s, size_t len);
@@ -1398,6 +1416,14 @@ bool video_context_driver_get_flags(gfx_ctx_flags_t *flags);
 
 bool video_driver_test_all_flags(enum display_flags testflag);
 
+/**
+ * video_driver_supports_10bit_source:
+ *
+ * Whether a native 10-bit source surface can be presented. Safe to call
+ * before the video driver exists, unlike the raw flag test.
+ **/
+bool video_driver_supports_10bit_source(void);
+
 size_t video_driver_set_gpu_api_version_string(const char *str);
 
 const char* video_driver_get_gpu_api_version_string(void);
@@ -1479,7 +1505,7 @@ extern video_driver_t video_gl1;
 extern video_driver_t video_vulkan;
 extern video_driver_t video_metal;
 extern video_driver_t video_psp1;
-extern video_driver_t video_vita2d;
+extern video_driver_t video_gxm;
 extern video_driver_t video_ps2;
 extern video_driver_t video_ctr;
 extern video_driver_t video_gcm;
@@ -1496,6 +1522,7 @@ extern video_driver_t video_xenon360;
 extern video_driver_t video_xvideo;
 extern video_driver_t video_sdl;
 extern video_driver_t video_sdl2;
+extern video_driver_t video_sdl3;
 extern video_driver_t video_sdl_dingux;
 extern video_driver_t video_sdl_rs90;
 extern video_driver_t video_vg;
@@ -1511,6 +1538,7 @@ extern video_driver_t video_vga;
 extern video_driver_t video_fpga;
 extern video_driver_t video_sixel;
 extern video_driver_t video_network;
+extern video_driver_t video_hub75;
 extern video_driver_t video_oga;
 extern video_driver_t video_null;
 

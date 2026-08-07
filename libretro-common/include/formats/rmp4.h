@@ -9,11 +9,11 @@
  * glue can drive either container identically.
  *
  * The codec set mirrors what libretro-common can decode: VP8 ('vp08'),
- * VP9 ('vp09') and H.264 ('avc1'/'avc3') video; Opus ('Opus'),
- * Vorbis and AAC ('mp4a' by object type) audio.  Other codecs (HEVC,
- * AV1, ...) are reported with their sample-entry fourcc in codec_id
- * and the codec field left RMP4_CODEC_UNKNOWN so callers can skip
- * them.
+ * VP9 ('vp09'), H.264 ('avc1'/'avc3') and H.265/HEVC ('hvc1'/'hev1')
+ * video; Opus ('Opus'), Vorbis and AAC ('mp4a' by object type) audio.
+ * Other codecs (AV1, ...) are reported with their sample-entry fourcc
+ * in codec_id and the codec field left RMP4_CODEC_UNKNOWN so callers
+ * can skip them.
  *
  * Both progressive files (sample tables in moov/trak/mdia/minf/stbl)
  * and fragmented movies (an mvex-marked moov followed by moof/mdat
@@ -53,7 +53,8 @@ enum rmp4_codec
    RMP4_CODEC_H264,
    RMP4_CODEC_VORBIS,
    RMP4_CODEC_OPUS,
-   RMP4_CODEC_AAC
+   RMP4_CODEC_AAC,
+   RMP4_CODEC_H265
 };
 
 typedef struct
@@ -109,6 +110,13 @@ void rmp4_close(rmp4_t *mp4);
 
 /* Track enumeration. */
 int               rmp4_num_tracks(const rmp4_t *mp4);
+
+/* Bounded-memory streaming support: the lowest media byte any track's
+ * first sample sits at (everything below is metadata the demuxer and
+ * its callers keep borrowed pointers into - it must stay resident),
+ * and the highest sample end delivered so far. */
+size_t            rmp4_media_floor(const rmp4_t *m);
+size_t            rmp4_consumed(const rmp4_t *m);
 const rmp4_track *rmp4_get_track(const rmp4_t *mp4, int index);
 
 /* Total duration in nanoseconds (from mvhd), or 0 if the file does not
@@ -119,7 +127,40 @@ int64_t rmp4_duration_ns(const rmp4_t *mp4);
  * Returns 1 on success, 0 at end of stream, -1 on a parse error. The
  * packet's data pointer aliases the input buffer and is valid until the
  * demuxer is closed. */
+/* Returned by rmp4_read_packet when the next sample's bytes lie beyond
+ * the prefix made available so far (see rmp4_set_avail): nothing was
+ * consumed; call again after more bytes arrive. */
+#define RMP4_READ_AGAIN 2
+
 int rmp4_read_packet(rmp4_t *mp4, rmp4_packet *pkt);
+
+/* Open against a partially-read buffer: only the first 'avail' bytes
+ * are valid (the rest may be uninitialised) and are never read.  Box
+ * bodies are hopped arithmetically, so a trailing moov (a file muxed
+ * without faststart) is found as soon as its own bytes arrive; a
+ * fragmented movie needs the whole file (its sample tables live in
+ * moof boxes interleaved to the end).  On failure, *need_more (when
+ * non-NULL) is set when the failure was running out of available
+ * bytes rather than malformed data - retry with a larger avail.
+ * rmp4_open_memory is this with avail == size. */
+/* need_lo/need_hi (optional): when the open stalls on the available
+ * prefix, the exact byte range that would let it progress - a box
+ * header past the wall, or the whole moov body.  A windowed caller
+ * can commit just that range instead of reading everything up to it;
+ * both stay 0 when the stall has no such range. */
+rmp4_t *rmp4_open_memory_avail(const uint8_t *data, size_t size,
+      size_t avail, int *need_more, size_t *need_lo, size_t *need_hi);
+
+/* Raise the number of valid bytes (monotonic; clamped to the file
+ * size). */
+void rmp4_set_avail(rmp4_t *mp4, size_t avail);
+
+/* Borrow a track's presentation timestamps (decode order), straight
+ * from the sample tables - available as soon as the moov is parsed,
+ * with no reference to the media data.  Returns NULL for an invalid
+ * track; the array lives until rmp4_close. */
+const int64_t *rmp4_track_pts(const rmp4_t *mp4, int track,
+      uint32_t *count);
 
 /* Restart packet reading from the first sample. */
 void rmp4_rewind(rmp4_t *mp4);

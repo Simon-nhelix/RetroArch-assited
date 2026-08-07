@@ -527,7 +527,7 @@ static void handle_translation_response(
 #ifdef HAVE_ACCESSIBILITY
    /* When auto mode is on, we turn off the overlay
     * once we have the result for the next call.*/
-   if (p_dispwidget->ai_service_overlay_state != 0
+   if (gfx_widgets_ai_service_overlay_get_state() != 0
        && access_st->ai_service_auto == 2)
       gfx_widgets_ai_service_overlay_unload();
 #endif
@@ -582,7 +582,7 @@ static void handle_translation_response(
           && gfx_widgets_paused)
       {
          /* In this case we have to unpause and then repause for a frame */
-         p_dispwidget->ai_service_overlay_state = 2;
+         gfx_widgets_ai_service_overlay_set_state(2);
          command_event(CMD_EVENT_UNPAUSE, NULL);
       }
 #endif
@@ -641,7 +641,7 @@ static void handle_translation_response(
          {
             /* In this case we have to unpause and then repause for a frame */
             /* Unpausing state */
-            p_dispwidget->ai_service_overlay_state = 2;
+            gfx_widgets_ai_service_overlay_set_state(2);
             command_event(CMD_EVENT_UNPAUSE, NULL);
          }
       }
@@ -818,6 +818,9 @@ static void handle_translation_response(
       params.buf                  = response->sound_data;
       params.bufsize              = response->sound_size;
       params.cb                   = NULL;
+      params.buf_owner            = NULL;
+      params.buf_owner_free       = NULL;
+      params.out_slot             = NULL;
       params.basename             = NULL;
 
       audio_driver_mixer_add_stream(&params);
@@ -1190,9 +1193,8 @@ bool run_translation_service(settings_t *settings, bool paused)
    video_driver_state_t *video_st    = video_state_get_ptr();
    access_state_t *access_st         = access_state_get_ptr();
 #ifdef HAVE_GFX_WIDGETS
-   dispgfx_widget_t *p_dispwidget    = dispwidget_get_ptr();
    /* For the case when ai service pause is disabled. */
-   if (     (p_dispwidget->ai_service_overlay_state != 0)
+   if (     (gfx_widgets_ai_service_overlay_get_state() != 0)
          && (access_st->ai_service_auto == 1))
    {
       gfx_widgets_ai_service_overlay_unload();

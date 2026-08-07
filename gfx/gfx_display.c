@@ -94,8 +94,8 @@ static gfx_display_ctx_driver_t *gfx_display_ctx_drivers[] = {
 #ifdef HAVE_METAL
    &gfx_display_ctx_metal,
 #endif
-#ifdef HAVE_VITA2D
-   &gfx_display_ctx_vita2d,
+#ifdef HAVE_GXM
+   &gfx_display_ctx_gxm,
 #endif
 #ifdef _3DS
    &gfx_display_ctx_ctr,
@@ -115,6 +115,9 @@ static gfx_display_ctx_driver_t *gfx_display_ctx_drivers[] = {
 #if SDL_VERSION_ATLEAST(2, 0, 18)
    &gfx_display_ctx_sdl2,
 #endif
+#endif
+#ifdef HAVE_SDL3
+   &gfx_display_ctx_sdl3,
 #endif
    NULL,
 };

@@ -18,11 +18,36 @@
 #ifndef __MSG_HASH_H
 #define __MSG_HASH_H
 
+/* enum msg_hash_enums below is guarded on HAVE_DYNAMIC, HAVE_LAKKA,
+ * HAVE_LAKKA_SWITCH, HAVE_MICROPHONE, HAVE_MIST, HAVE_GAME_AI,
+ * HAVE_ODROIDGO2, HAVE_RETROFLAG and HAVE_SMBCLIENT, all of which come
+ * from config.h.  Include it here rather than relying on every
+ * translation unit to have pulled it in first: a unit that reaches
+ * this header without config.h gets a *different numbering* for every
+ * enumerator after the first guarded one, silently and with no
+ * diagnostic.
+ *
+ * All 39 units that currently include this header do reach config.h
+ * beforehand, verified by preprocessing each of them, so this changes
+ * no generated code today.  It removes the trap for the next one.
+ * msg_hash_lbl_str.h already does exactly this. */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdint.h>
 #include <stddef.h>
 #include <limits.h>
 #include <boolean.h>
 #include <retro_common_api.h>
+
+#ifdef __MACH__
+/* The GENERATED REGION rows below are gated on TARGET_OS_IPHONE /
+ * TARGET_OS_IOS.  msg_hash.h is pulled in by translation units that
+ * never include config.def.h, so without this the macros are
+ * undefined there and Apple clang emits -Wundef-prefix=TARGET_OS_. */
+#include <TargetConditionals.h>
+#endif
 
 #include "input/input_defines.h"
 
@@ -3206,6 +3231,7 @@ enum msg_hash_enums
 #undef SETTINGS_DEF_ENUM_PASS
 #ifdef ANDROID
    MENU_LBL_H(INPUT_SELECT_PHYSICAL_KEYBOARD),
+   MENU_LABEL(INPUT_ANDROID_SYSTEM_KEYBOARD),
 #endif
 
    /* GENERATED REGION: auto mouse grab setting enum rows (see settings/settings_def_input_auto_mouse_grab.h). */
@@ -31225,6 +31251,7 @@ enum msg_hash_enums
    MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_BUILD_DATE,
    MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_RETROARCH_VERSION,
    MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_GIT_VERSION,
+   MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_MOLTENVK_VERSION,
    MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_CPU_MODEL,
    MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_CPU_FEATURES,
    MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_FRONTEND_IDENTIFIER,

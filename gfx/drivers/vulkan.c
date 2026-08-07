@@ -405,7 +405,11 @@ typedef struct vk
       VkSemaphore *semaphores;
       VkSemaphore signal_semaphore; /* ptr alignment */
 
-      struct retro_hw_render_interface_vulkan iface;
+      /* The retro_hw_render_interface_vulkan the core is handed used
+       * to live here.  It now has static storage - see
+       * vulkan_hw_iface - because the pointer returned by
+       * vulkan_get_hw_render_interface() must outlive this
+       * allocation. */
 
       unsigned capacity_cmd;
       unsigned last_width;
@@ -506,6 +510,8 @@ static INLINE unsigned vulkan_format_to_bpp(VkFormat format)
       case VK_FORMAT_R4G4B4A4_UNORM_PACK16:
       case VK_FORMAT_B4G4R4A4_UNORM_PACK16:
       case VK_FORMAT_R5G6B5_UNORM_PACK16:
+         return 2;
+      case VK_FORMAT_R16_UNORM:
          return 2;
       case VK_FORMAT_R8_UNORM:
          return 1;
@@ -876,7 +882,13 @@ static struct vk_descriptor_pool *vulkan_alloc_descriptor_pool(
       pool->sets[i]                = VK_NULL_HANDLE;
    pool->next                      = NULL;
 
-   vkCreateDescriptorPool(device, &pool_info, NULL, &pool->pool);
+   if (vkCreateDescriptorPool(device, &pool_info, NULL, &pool->pool)
+         != VK_SUCCESS)
+   {
+      RARCH_ERR("[Vulkan] Failed to create descriptor pool.\n");
+      free(pool);
+      return NULL;
+   }
 
    /* Just allocate all descriptor sets up front. */
    alloc_info.sType                = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -885,8 +897,21 @@ static struct vk_descriptor_pool *vulkan_alloc_descriptor_pool(
    alloc_info.descriptorSetCount   = 1;
    alloc_info.pSetLayouts          = &manager->set_layout;
 
+   /* A partially populated block is unusable: the manager hands out
+    * sets by index, so a VK_NULL_HANDLE hole would be written to and
+    * bound as if it were live. Tear the whole block down instead. */
    for (i = 0; i < VULKAN_DESCRIPTOR_MANAGER_BLOCK_SETS; i++)
-      vkAllocateDescriptorSets(device, &alloc_info, &pool->sets[i]);
+   {
+      if (vkAllocateDescriptorSets(device, &alloc_info, &pool->sets[i])
+            != VK_SUCCESS)
+      {
+         RARCH_ERR("[Vulkan] Failed to allocate descriptor set %u/%u.\n",
+               i, (unsigned)VULKAN_DESCRIPTOR_MANAGER_BLOCK_SETS);
+         vkDestroyDescriptorPool(device, pool->pool, NULL);
+         free(pool);
+         return NULL;
+      }
+   }
 
    return pool;
 }
@@ -895,17 +920,22 @@ static struct vk_descriptor_pool *vulkan_alloc_descriptor_pool(
 static VkDescriptorSet vulkan_descriptor_manager_alloc(
       VkDevice device, struct vk_descriptor_manager *manager)
 {
+   if (!manager->current)
+      return VK_NULL_HANDLE;
+
    if (manager->count >= VULKAN_DESCRIPTOR_MANAGER_BLOCK_SETS)
    {
-      while (manager->current->next)
+      if (!manager->current->next)
       {
-         manager->current = manager->current->next;
-         manager->count   = 0;
-         return manager->current->sets[manager->count++];
+         struct vk_descriptor_pool *block =
+            vulkan_alloc_descriptor_pool(device, manager);
+         /* Out of descriptor memory. Report the failure upwards so the
+          * caller can drop the draw; handing back a stale or null set
+          * leaves the driver writing through a dangling descriptor. */
+         if (!block)
+            return VK_NULL_HANDLE;
+         manager->current->next = block;
       }
-
-      manager->current->next = vulkan_alloc_descriptor_pool(device, manager);
-      retro_assert(manager->current->next);
 
       manager->current = manager->current->next;
       manager->count   = 0;
@@ -981,6 +1011,8 @@ static void vulkan_draw_triangles(vk_t *vk, const struct vk_draw_triangles *call
       set = vulkan_descriptor_manager_alloc(
             vk->context->device,
             &vk->chain->descriptor_manager);
+      if (set == VK_NULL_HANDLE)
+         return;
 
       vulkan_write_quad_descriptors(
             vk->context->device,
@@ -1671,6 +1703,8 @@ static void vulkan_copy_staging_to_dynamic(vk_t *vk, VkCommandBuffer cmd,
       set = vulkan_descriptor_manager_alloc(
             vk->context->device,
             &vk->chain->descriptor_manager);
+      if (set == VK_NULL_HANDLE)
+         return;
 
       if (!vulkan_buffer_chain_alloc(vk->context, &vk->chain->ubo,
             sizeof(ubo), &range))
@@ -1971,8 +2005,6 @@ static void gfx_display_vk_draw(gfx_display_ctx_draw_t *draw,
       vertex                      = &vk_vertexes[0];
    if (!tex_coord)
       tex_coord                   = &vk_tex_coords[0];
-   if (!draw->coords->lut_tex_coord)
-      draw->coords->lut_tex_coord = &vk_tex_coords[0];
    if (!texture)
       texture                     = &vk->display.blank_texture;
    if (!color)
@@ -2179,11 +2211,18 @@ static INLINE void vulkan_font_update_glyph(
    unsigned gx_max = gx_min + glyph->width;
    unsigned gy_max = gy_min + glyph->height;
 
-   for (row = gy_min; row < gy_max; row++)
    {
-      uint8_t *src = font->atlas->buffer + row * font->atlas->width + gx_min;
-      uint8_t *dst = (uint8_t*)font->texture.mapped + row * font->texture.stride + gx_min;
-      memcpy(dst, src, glyph->width);
+      size_t esz = (font->atlas->format == FONT_ATLAS_FORMAT_A16)
+            ? sizeof(uint16_t) : sizeof(uint8_t);
+      for (row = gy_min; row < gy_max; row++)
+      {
+         uint8_t *src = font->atlas->buffer
+               + ((size_t)row * font->atlas->width + gx_min) * esz;
+         uint8_t *dst = (uint8_t*)font->texture.mapped
+               + (size_t)row * font->texture.stride
+               + (size_t)gx_min * esz;
+         memcpy(dst, src, (size_t)glyph->width * esz);
+      }
    }
 
    /* Expand the dirty bounding box. */
@@ -2225,27 +2264,49 @@ static void *vulkan_font_init(void *data,
 
    font->vk = (vk_t*)data;
 
-   if (!font_renderer_create_default(
-            &font->font_driver,
-            &font->font_data, font_path, font_size))
    {
-      free(font);
-      return NULL;
+      enum font_atlas_format prev_fmt =
+            font_renderer_get_preferred_atlas_format();
+#ifdef VULKAN_HDR_SWAPCHAIN
+      /* When the swapchain is HDR, ask for a higher-precision
+       * coverage atlas (same policy as the d3d12 driver). */
+      if (     font->vk && font->vk->context
+            && (  font->vk->context->swapchain_format
+                     == VK_FORMAT_R16G16B16A16_SFLOAT
+               || font->vk->context->swapchain_format
+                     == VK_FORMAT_A2B10G10R10_UNORM_PACK32))
+         font_renderer_set_preferred_atlas_format(FONT_ATLAS_FORMAT_A16);
+#endif
+      if (!font_renderer_create_default(
+               &font->font_driver,
+               &font->font_data, font_path, font_size))
+      {
+         font_renderer_set_preferred_atlas_format(prev_fmt);
+         free(font);
+         return NULL;
+      }
+      font_renderer_set_preferred_atlas_format(prev_fmt);
    }
 
    font->atlas   = font->font_driver->get_atlas(font->font_data);
-   font->texture = vulkan_create_texture(font->vk, NULL,
-         font->atlas->width, font->atlas->height, VK_FORMAT_R8_UNORM, font->atlas->buffer,
-         NULL, VULKAN_TEXTURE_STAGING);
+   {
+      /* font.frag samples channel .x, so R16_UNORM is a drop-in for
+       * R8_UNORM; the HDR font pipeline itself already exists. */
+      VkFormat tex_fmt = (font->atlas->format == FONT_ATLAS_FORMAT_A16)
+            ? VK_FORMAT_R16_UNORM : VK_FORMAT_R8_UNORM;
+      font->texture = vulkan_create_texture(font->vk, NULL,
+            font->atlas->width, font->atlas->height, tex_fmt, font->atlas->buffer,
+            NULL, VULKAN_TEXTURE_STAGING);
 
    {
       struct vk_texture *texture = &font->texture;
       vkMapMemory(font->vk->context->device, texture->memory, texture->offset, texture->size, 0, &texture->mapped);
    }
 
-   font->texture_optimal = vulkan_create_texture(font->vk, NULL,
-         font->atlas->width, font->atlas->height, VK_FORMAT_R8_UNORM, NULL,
-         NULL, VULKAN_TEXTURE_DYNAMIC);
+      font->texture_optimal = vulkan_create_texture(font->vk, NULL,
+            font->atlas->width, font->atlas->height, tex_fmt, NULL,
+            NULL, VULKAN_TEXTURE_DYNAMIC);
+   }
 
    /* Initial upload is full atlas. */
    font->dirty_x_min  = 0;
@@ -2274,6 +2335,16 @@ static int vulkan_font_get_message_width(void *data, const char *msg,
       return 0;
 
    glyph_q = get_glyph(font_data, '?');
+   /* The fallback glyph can itself have just been rasterized (it is
+    * evicted like any other slot under atlas pressure); without this
+    * pairing its cell would be stranded once an unrelated glyph's
+    * update clears the dirty flag. */
+   if (glyph_q && font->atlas->dirty)
+   {
+      vulkan_font_update_glyph(font, glyph_q);
+      font->atlas->dirty = false;
+      font->needs_update = true;
+   }
 
    while (msg < msg_end)
    {
@@ -2400,6 +2471,15 @@ static void vulkan_font_render_msg(
    font->pv         = (struct vk_vertex*)font->range.data;
    glyph_q          = (font->font_driver)
       ? font->font_driver->get_glyph(font->font_data, '?') : NULL;
+
+   /* Pair the fallback-glyph lookup with an upload like every other
+    * lookup, in case '?' was just (re)rasterized after eviction. */
+   if (glyph_q && font->atlas->dirty)
+   {
+      vulkan_font_update_glyph(font, glyph_q);
+      font->atlas->dirty = false;
+      font->needs_update = true;
+   }
    font->font_driver->get_line_metrics(font->font_data, &line_metrics);
    line_height      = line_metrics->height * scale / vk->vp.height;
 
@@ -2688,11 +2768,19 @@ static void vulkan_font_render_msg(
                   VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
                   VK_PIPELINE_STAGE_TRANSFER_BIT);
 
-            /* R8_UNORM => bpp = 1; stride is already in bytes. */
-            region.bufferOffset                    =
-               (VkDeviceSize)dy * staging_tex->stride + dx;
-            region.bufferRowLength                 =
-               (uint32_t)staging_tex->stride;
+            /* bufferOffset is in bytes; bufferRowLength is in
+             * TEXELS. For R8 the two coincide with the byte stride,
+             * for R16 they do not. */
+            {
+               unsigned bpp = vulkan_format_to_bpp(staging_tex->format);
+               if (!bpp)
+                  bpp = 1;
+               region.bufferOffset              =
+                  (VkDeviceSize)dy * staging_tex->stride
+                     + (VkDeviceSize)dx * bpp;
+               region.bufferRowLength           =
+                  (uint32_t)(staging_tex->stride / bpp);
+            }
             region.bufferImageHeight               = 0;
             region.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
             region.imageSubresource.mipLevel       = 0;
@@ -2854,6 +2942,8 @@ static void vulkan_font_render_msg(
       set = vulkan_descriptor_manager_alloc(
             vk->context->device,
             &vk->chain->descriptor_manager);
+      if (set == VK_NULL_HANDLE)
+         return;
 
       vulkan_write_quad_descriptors(
             vk->context->device,
@@ -4263,6 +4353,7 @@ static void vulkan_set_hdr10(vk_t* vk, vulkan_filter_chain_t* filter_chain, bool
 static bool vulkan_init_default_filter_chain(vk_t *vk)
 {
    struct vulkan_filter_chain_create_info info;
+   settings_t *settings;
 
    if (!vk->context)
       return false;
@@ -4270,7 +4361,7 @@ static bool vulkan_init_default_filter_chain(vk_t *vk)
    if (vk->filter_chain_default)
       return true;
 
-   settings_t *settings       = config_get_ptr();
+   settings                   = config_get_ptr();
 
    info.device                = vk->context->device;
    info.gpu                   = vk->context->gpu;
@@ -4370,11 +4461,12 @@ static bool vulkan_init_default_filter_chain(vk_t *vk)
 static bool vulkan_init_filter_chain_preset(vk_t *vk, const char *shader_path)
 {
    struct vulkan_filter_chain_create_info info;
+   settings_t *settings;
 
    if (!vk->context)
       return false;
 
-   settings_t* settings       = config_get_ptr();
+   settings                   = config_get_ptr();
 
    info.device                = vk->context->device;
    info.gpu                   = vk->context->gpu;
@@ -4737,6 +4829,38 @@ static void vulkan_destroy_hdr_buffer(VkDevice device, struct vk_image *img)
 }
 #endif
 
+/* The interface handed to the core by
+ * vulkan_get_hw_render_interface().  It used to be a member of vk_t,
+ * so what the core received was an interior pointer into an
+ * allocation vulkan_free() releases.
+ *
+ * A core that submits from its own thread - PPSSPP's
+ * VulkanRenderManager runs a dedicated render thread - caches that
+ * pointer and keeps using it across a video_driver_reinit().  In the
+ * cache_context path the core is never told the interface went away:
+ * video_driver_free_internal() skips video_driver_free_hw_context(),
+ * so context_destroy() does not run, while vulkan_free() frees the
+ * vk_t regardless and vulkan_init() allocates a new one.  The render
+ * thread then dereferences freed memory - first with the block still
+ * largely intact, faulting on a cleared handle inside
+ * vulkan_lock_queue(), and later, once the block has been reused,
+ * with a cleared lock_queue, which is a call through a null function
+ * pointer.  Both signatures turn up in iOS reports, where a rotation
+ * or a return from background reinitialises the driver underneath a
+ * running core.
+ *
+ * Static storage keeps the address the core holds valid for the
+ * process lifetime.  It is published by vulkan_init_hw_render() and
+ * unpublished by vulkan_free(), which clears the handle rather than
+ * the entry points: a submission landing in the window between
+ * teardown and the next context_reset then takes the guarded no-op
+ * path in the callbacks above instead of faulting.  Losing the queue
+ * lock for that window is survivable precisely because this is the
+ * cache_context path - the device and the queue are cached and
+ * outlive the vk_t - and it is what the core was already doing
+ * unsynchronised by racing the teardown at all. */
+static struct retro_hw_render_interface_vulkan vulkan_hw_iface;
+
 static void vulkan_free(void *data)
 {
    vk_t *vk = (vk_t*)data;
@@ -4794,18 +4918,31 @@ static void vulkan_free(void *data)
 
    scaler_ctx_gen_reset(&vk->readback.scaler_bgr);
    scaler_ctx_gen_reset(&vk->readback.scaler_rgb);
+
+   /* Unpublish before the free, so a core thread that reads the
+    * handle from here on reads NULL rather than a dangling vk_t.
+    * Tested against this vk, not unconditionally: a driver teardown
+    * that races an init must not clear an interface the init has
+    * already republished. */
+   if (vulkan_hw_iface.handle == vk)
+      vulkan_hw_iface.handle = NULL;
+
    free(vk);
 }
 
 static uint32_t vulkan_get_sync_index(void *handle)
 {
    vk_t *vk = (vk_t*)handle;
+   if (!vk || !vk->context)
+      return 0;
    return vk->context->current_frame_index;
 }
 
 static uint32_t vulkan_get_sync_index_mask(void *handle)
 {
    vk_t *vk = (vk_t*)handle;
+   if (!vk || !vk->context)
+      return 0;
    return (1 << vk->context->num_swapchain_images) - 1;
 }
 
@@ -4816,6 +4953,9 @@ static void vulkan_set_image(void *handle,
       uint32_t src_queue_family)
 {
    vk_t *vk              = (vk_t*)handle;
+
+   if (!vk)
+      return;
 
    vk->hw.image          = image;
    vk->hw.num_semaphores = num_semaphores;
@@ -4831,8 +4971,24 @@ static void vulkan_set_image(void *handle,
       VkSemaphore *new_semaphores = (VkSemaphore*)realloc(vk->hw.semaphores,
             sizeof(VkSemaphore) * (vk->hw.num_semaphores + 1));
 
-      vk->hw.wait_dst_stages = stage_flags;
-      vk->hw.semaphores      = new_semaphores;
+      /* realloc() returns NULL on failure and leaves the original
+       * block allocated, so storing the result unconditionally both
+       * leaks the old array and arms the loop below to write through
+       * NULL.  Keep whichever of the two actually grew, and if either
+       * failed, report no semaphores rather than a short array. */
+      if (stage_flags)
+         vk->hw.wait_dst_stages = stage_flags;
+      if (new_semaphores)
+         vk->hw.semaphores      = new_semaphores;
+
+      if (!stage_flags || !new_semaphores)
+      {
+         RARCH_ERR("[Vulkan] Failed to allocate semaphore state for"
+               " %u semaphore(s).\n", num_semaphores);
+         vk->hw.num_semaphores = 0;
+         vk->flags            &= ~VK_FLAG_HW_VALID_SEMAPHORE;
+         return;
+      }
 
       for (i = 0; i < (int) vk->hw.num_semaphores; i++)
       {
@@ -4856,11 +5012,28 @@ static void vulkan_set_command_buffers(void *handle, uint32_t num_cmd,
 {
    vk_t *vk                   = (vk_t*)handle;
    unsigned required_capacity = num_cmd + 1;
+
+   if (!vk)
+      return;
+
    if (required_capacity > vk->hw.capacity_cmd)
    {
       VkCommandBuffer *hw_cmd = (VkCommandBuffer*)
          realloc(vk->hw.cmd,
             sizeof(VkCommandBuffer) * required_capacity);
+
+      /* On failure the old block is still ours.  Storing NULL over it
+       * leaked it, left the memcpy below writing through NULL, and --
+       * worse, because it outlives this call -- left capacity_cmd
+       * claiming room that no longer exists, so the next call with a
+       * smaller count skipped the grow and wrote through NULL again. */
+      if (!hw_cmd)
+      {
+         RARCH_ERR("[Vulkan] Failed to allocate room for %u command"
+               " buffer(s).\n", num_cmd);
+         vk->hw.num_cmd       = 0;
+         return;
+      }
 
       vk->hw.cmd              = hw_cmd;
       vk->hw.capacity_cmd     = required_capacity;
@@ -4874,7 +5047,8 @@ static void vulkan_lock_queue(void *handle)
 {
 #ifdef HAVE_THREADS
    vk_t *vk = (vk_t*)handle;
-   slock_lock(vk->context->queue_lock);
+   if (vk && vk->context && vk->context->queue_lock)
+      slock_lock(vk->context->queue_lock);
 #endif
 }
 
@@ -4882,13 +5056,16 @@ static void vulkan_unlock_queue(void *handle)
 {
 #ifdef HAVE_THREADS
    vk_t *vk = (vk_t*)handle;
-   slock_unlock(vk->context->queue_lock);
+   if (vk && vk->context && vk->context->queue_lock)
+      slock_unlock(vk->context->queue_lock);
 #endif
 }
 
 static void vulkan_set_signal_semaphore(void *handle, VkSemaphore semaphore)
 {
    vk_t *vk = (vk_t*)handle;
+   if (!vk)
+      return;
    vk->hw.signal_semaphore = semaphore;
 }
 
@@ -4938,7 +5115,7 @@ static void vulkan_invalidate_hw_render_cache(void *data)
 static void vulkan_init_hw_render(vk_t *vk)
 {
    struct retro_hw_render_interface_vulkan *iface   =
-      &vk->hw.iface;
+      &vulkan_hw_iface;
    struct retro_hw_render_callback *hwr =
       video_driver_get_hw_context();
 
@@ -5322,6 +5499,9 @@ static void *vulkan_init(const video_info_t *video,
 #endif
 
    vulkan_init_readback(vk, settings->bools.video_gpu_record);
+
+   /* Driver resources now match the context's current swapchain. */
+   vk->context->flags &= ~VK_CTX_FLAG_INVALID_SWAPCHAIN;
    return vk;
 
 error:
@@ -5454,6 +5634,25 @@ static void vulkan_check_swapchain(vk_t *vk)
           &filter_info)
       )
       RARCH_ERR("[Vulkan] Failed to update filter chain info.\n");
+}
+
+static bool vulkan_recreate_context_swapchain(vk_t *vk)
+{
+   unsigned width  = vk->context->swapchain_width;
+   unsigned height = vk->context->swapchain_height;
+
+   if (!vk->ctx_driver->set_resize)
+      return false;
+
+   /* set_resize is the context-owned recreation path. It replaces the
+    * swapchain before returning, releasing any acquired image that cannot be
+    * submitted safely by this frame. */
+   vk->context->flags |= VK_CTX_FLAG_INVALID_SWAPCHAIN;
+   if (!vk->ctx_driver->set_resize(vk->ctx_data, width, height))
+      return false;
+
+   vulkan_check_swapchain(vk);
+   return true;
 }
 
 static void vulkan_set_nonblock_state(void *data, bool state,
@@ -6149,6 +6348,8 @@ static void vulkan_draw_quad(vk_t *vk, const struct vk_draw_quad *quad)
          set = vulkan_descriptor_manager_alloc(
                vk->context->device,
                &vk->chain->descriptor_manager);
+         if (set == VK_NULL_HANDLE)
+            return;
 
          vulkan_write_quad_descriptors(
                vk->context->device,
@@ -6422,6 +6623,9 @@ static void vulkan_run_hdr_pipeline(VkPipeline pipeline, VkRenderPass render_pas
 
       vulkan_hdr_uniform_t* mapped_ubo = (vulkan_hdr_uniform_t*)ubo->mapped;
 
+      if (set == VK_NULL_HANDLE)
+         return;
+
       *mapped_ubo  = vk->hdr.ubo_values;
 
       VULKAN_SET_UNIFORM_BUFFER(vk->context->device,
@@ -6550,11 +6754,44 @@ static bool vulkan_frame(void *data, const void *frame,
 #ifdef HAVE_GFX_WIDGETS
    bool widgets_active                           = video_info->widgets_active;
 #endif
-   unsigned frame_index                          =
-      vk->context->current_frame_index;
-   unsigned swapchain_index                      =
-      vk->context->current_swapchain_index;
+   unsigned frame_index;
+   unsigned swapchain_index;
    bool overlay_behind_menu                      = video_info->overlay_behind_menu;
+   bool message_visible;
+#ifdef HAVE_GFX_WIDGETS
+   bool widgets_visible;
+#endif
+#ifdef VULKAN_HDR_SWAPCHAIN
+   bool end_pass;
+   bool end_main_pass;
+   bool video_hdr_enable;
+#endif
+   gfx_ctx_mode_t mode;
+   struct vk_per_frame *chain;
+   struct vk_image *backbuffer;
+   struct vk_descriptor_manager *manager;
+   struct vk_buffer_chain *buff_chain_vbo;
+   struct vk_buffer_chain *buff_chain_ubo;
+#ifdef VULKAN_HDR_SWAPCHAIN
+   bool use_offscreen_buffer                     = false;
+#endif
+
+   /* The context may recreate its swapchain while acquiring the next
+    * image. Rebuild driver-owned framebuffers before recording commands
+    * against images from the new swapchain. */
+   if (vk->context->flags & VK_CTX_FLAG_INVALID_SWAPCHAIN)
+      vulkan_check_swapchain(vk);
+
+   frame_index     = vk->context->current_frame_index;
+   swapchain_index = vk->context->current_swapchain_index;
+
+   if (     frame_index     >= vk->num_swapchain_images
+         || swapchain_index >= vk->num_swapchain_images)
+   {
+      RARCH_ERR("[Vulkan] Invalid swapchain indices (frame %u, image %u, count %u).\n",
+            frame_index, swapchain_index, vk->num_swapchain_images);
+      return vulkan_recreate_context_swapchain(vk);
+   }
 
    /* Fast toggle shader filter chain logic */
    filter_chain = vk->filter_chain;
@@ -6579,7 +6816,6 @@ static bool vulkan_frame(void *data, const void *frame,
     * The default filter chain already contains the internal HDR shader
     * (hdr_frag) so it renders directly to the swapchain — no offscreen needed.
     * Custom shader chains need offscreen unless they emit HDR natively. */
-   bool use_offscreen_buffer = false;
    if ((vk->context->flags & VK_CTX_FLAG_HDR_ENABLE)
       && filter_chain != vk->filter_chain_default)
    {
@@ -6601,11 +6837,11 @@ static bool vulkan_frame(void *data, const void *frame,
 #endif /* VULKAN_HDR_SWAPCHAIN */
 
    /* Bookkeeping on start of frame. */
-   struct vk_per_frame *chain                    = &vk->swapchain[frame_index];
-   struct vk_image *backbuffer                   = &vk->backbuffers[swapchain_index];
-   struct vk_descriptor_manager *manager         = &chain->descriptor_manager;
-   struct vk_buffer_chain *buff_chain_vbo        = &chain->vbo;
-   struct vk_buffer_chain *buff_chain_ubo        = &chain->ubo;
+   chain                                         = &vk->swapchain[frame_index];
+   backbuffer                                    = &vk->backbuffers[swapchain_index];
+   manager                                       = &chain->descriptor_manager;
+   buff_chain_vbo                                = &chain->vbo;
+   buff_chain_ubo                                = &chain->ubo;
 
    vk->chain                                     = chain;
    vk->backbuffer                                = backbuffer;
@@ -6804,12 +7040,14 @@ static bool vulkan_frame(void *data, const void *frame,
          (vulkan_filter_chain_t*)filter_chain, video_driver_get_core_aspect());
 
    /* OriginalAspectRotated: return 1/aspect for 90 and 270 rotated content */
-   uint32_t rot = retroarch_get_rotation();
-   float core_aspect_rot = video_driver_get_core_aspect();
-   if (rot == 1 || rot == 3)
-      core_aspect_rot = 1/core_aspect_rot;
-   vulkan_filter_chain_set_core_aspect_rot(
-         (vulkan_filter_chain_t*)filter_chain, core_aspect_rot);
+   {
+      uint32_t rot          = retroarch_get_rotation();
+      float core_aspect_rot = video_driver_get_core_aspect();
+      if (rot == 1 || rot == 3)
+         core_aspect_rot    = 1 / core_aspect_rot;
+      vulkan_filter_chain_set_core_aspect_rot(
+            (vulkan_filter_chain_t*)filter_chain, core_aspect_rot);
+   }
 
 #ifdef VULKAN_HDR_SWAPCHAIN
    {
@@ -6938,8 +7176,17 @@ static bool vulkan_frame(void *data, const void *frame,
       backbuffer = &vk->offscreen_buffer;
 #endif /* VULKAN_HDR_SWAPCHAIN */
 
+   if (     (backbuffer->image != VK_NULL_HANDLE)
+         && (backbuffer->framebuffer == VK_NULL_HANDLE))
+   {
+      RARCH_ERR("[Vulkan] Swapchain image %u has no framebuffer.\n",
+            swapchain_index);
+      return vulkan_recreate_context_swapchain(vk);
+   }
+
    /* Render to backbuffer. */
    if (     (backbuffer->image != VK_NULL_HANDLE)
+         && (backbuffer->framebuffer != VK_NULL_HANDLE)
          && (vk->context->flags & VK_CTX_FLAG_HAS_ACQUIRED_SWAPCHAIN))
    {
       rp_info.sType                    = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -6971,8 +7218,8 @@ static bool vulkan_frame(void *data, const void *frame,
             &vk->vk_vp, vk->mvp.data);
 
 #ifdef VULKAN_HDR_SWAPCHAIN
-      bool end_pass = true;
-      bool end_main_pass = true;
+      end_pass      = true;
+      end_main_pass = true;
 
       /* Copy over back buffer to swap chain render targets */
       if ((vk->context->flags & VK_CTX_FLAG_HDR_ENABLE) &&
@@ -7013,10 +7260,10 @@ static bool vulkan_frame(void *data, const void *frame,
          end_main_pass = false;
       }
 
-      const bool message_visible = msg && *msg;
+      message_visible = msg && *msg;
 
 #ifdef HAVE_GFX_WIDGETS
-      const bool widgets_visible = gfx_widgets_visible(video_info);
+      widgets_visible = gfx_widgets_visible(video_info);
 #endif
 
       if ((vk->context->flags & VK_CTX_FLAG_HDR_ENABLE) &&
@@ -7412,7 +7659,7 @@ static bool vulkan_frame(void *data, const void *frame,
    /* Handle spurious swapchain invalidations as soon as we can,
     * i.e. right after swap buffers. */
 #ifdef VULKAN_HDR_SWAPCHAIN
-   bool video_hdr_enable = (video_driver_get_disp_flags() & VIDEO_FLAG_HDR_SUPPORT) && (video_info->hdr_mode > 0);
+   video_hdr_enable = (video_driver_get_disp_flags() & VIDEO_FLAG_HDR_SUPPORT) && (video_info->hdr_mode > 0);
    if (       (vk->flags & VK_FLAG_SHOULD_RESIZE)
          || (((vk->context->flags & VK_CTX_FLAG_HDR_ENABLE) > 0)
          != video_hdr_enable))
@@ -7439,7 +7686,6 @@ static bool vulkan_frame(void *data, const void *frame,
 
 #endif /* VULKAN_HDR_SWAPCHAIN */
 
-      gfx_ctx_mode_t mode;
       mode.width  = width;
       mode.height = height;
 
@@ -7717,7 +7963,7 @@ static bool vulkan_get_hw_render_interface(void *data,
       const struct retro_hw_render_interface **iface)
 {
    vk_t *vk = (vk_t*)data;
-   *iface   = (const struct retro_hw_render_interface*)&vk->hw.iface;
+   *iface   = (const struct retro_hw_render_interface*)&vulkan_hw_iface;
    return ((vk->flags & VK_FLAG_HW_ENABLE) > 0);
 }
 

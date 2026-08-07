@@ -14,6 +14,7 @@
 
 static const struct
 {
+   char s_74d0bdad[35];
    char s_54d907f5[10];
    char s_9a250c33[32];
    char s_dec692c9[35];
@@ -38,6 +39,8 @@ static const struct
    char s_76fae911[54];
    char s_56581215[55];
    char s_6b45243b[23];
+   char s_43585d45[28];
+   char s_43585d53[29];
    char s_ea6df2a1[149];
    char s_bfb33e98[88];
    char s_87603f77[17];
@@ -77,6 +80,7 @@ static const struct
    char s_2aa9ecfe[167];
    char s_d179d08d[205];
    char s_70c7c198[298];
+   char s_bed75ef8[177];
    char s_a4d0f03f[233];
    char s_1aa5e88e[341];
    char s_5d67fad5[246];
@@ -142,6 +146,7 @@ static const struct
    char s_1382c258[203];
    char s_4caab10c[257];
    char s_03580e17[149];
+   char s_9998fdce[273];
    char s_1d269383[190];
    char s_34c6f6e4[53];
    char s_4dc69fe8[434];
@@ -215,6 +220,7 @@ static const struct
    char s_fc24216f[19];
    char s_728aa9b3[20];
    char s_929e8e7a[41];
+   char s_51edb70d[24];
    char s_9b914f7f[29];
    char s_4ad41e20[25];
    char s_24c106e6[8];
@@ -265,7 +271,11 @@ static const struct
    char s_f7e668f4[8];
    char s_f4740f16[32];
    char s_d95f1db1[45];
+   char s_3c9950ad[51];
    char s_aafc147d[13];
+   char s_734f5242[33];
+   char s_55404857[14];
+   char s_5577bdb3[16];
    char s_792e0069[23];
    char s_a9d2227f[21];
    char s_76e73138[20];
@@ -313,7 +323,10 @@ static const struct
 #endif
 #ifdef _3DS
    char s_22a46583[62];
+   char s_a4d079f8[27];
+   char s_3f3d3a01[28];
    char s_6651ce29[31];
+   char s_04fed26b[28];
    char s_17813ad9[30];
    char s_1131883a[12];
 #endif
@@ -960,6 +973,7 @@ static const struct
    char s_4e2f19db[19];
    char s_9e66791a[11];
    char s_f3076af9[5];
+   char s_168d155d[18];
    char s_c64d260f[10];
 #ifdef HAVE_LAKKA_SWITCH
    char s_becdc648[31];
@@ -1067,6 +1081,9 @@ static const struct
    char s_68d27147[12];
    char s_f02f73fc[34];
    char s_3a0a3fef[17];
+   char s_1b6ed818[27];
+   char s_89a75c21[28];
+   char s_9439ec8b[28];
    char s_1e09db79[19];
    char s_0d2d8eef[10];
    char s_400523e5[23];
@@ -1095,6 +1112,7 @@ static const struct
    char s_d05c8ee3[29];
    char s_13bce77f[16];
    char s_1b2ee6c4[34];
+   char s_81589fd5[27];
    char s_26e9cde7[36];
    char s_b539ec6c[16];
    char s_f89e1cbc[61];
@@ -1109,6 +1127,7 @@ static const struct
    char s_5b3c8098[24];
    char s_ceb820ad[9];
    char s_63af41a7[36];
+   char s_a4b769ca[38];
 #ifdef HAVE_MIST
    char s_53788998[28];
 #endif
@@ -1119,6 +1138,7 @@ static const struct
    char s_5e519829[27];
 #endif
 #endif
+   char s_a6e5d0ee[26];
    char s_f228c6c5[19];
    char s_11926382[26];
    char s_645ae416[33];
@@ -1139,7 +1159,9 @@ static const struct
    char s_d264a13e[10];
    char s_d3213ff3[18];
    char s_ac60056b[12];
+   char s_54d6b95e[12];
    char s_1ad09b45[28];
+   char s_774e2332[28];
    char s_87064238[35];
    char s_2a273dd7[22];
    char s_5e5fc0ee[28];
@@ -1149,6 +1171,7 @@ static const struct
    char s_1193e37b[41];
    char s_729a38da[27];
    char s_4ca32b24[13];
+   char s_b51fb85c[33];
    char s_9b2a97d9[18];
    char s_94ce603f[43];
    char s_0c1e1a65[47];
@@ -1157,6 +1180,7 @@ static const struct
    char s_35c18fe2[40];
    char s_7742d553[28];
    char s_813d8d09[43];
+   char s_87f05947[34];
    char s_a771be4c[24];
    char s_204201cb[34];
    char s_5e8d5121[17];
@@ -1389,6 +1413,7 @@ static const struct
    char s_69a447f7[22];
    char s_9fcdb5e7[20];
    char s_6799135b[42];
+   char s_1cdff4ac[33];
    char s_9c6cf201[81];
    char s_012938fb[34];
    char s_a747cdc9[65];
@@ -1764,6 +1789,7 @@ static const struct
    char s_8dec52be[44];
    char s_8fa632ab[16];
    char s_7614d29f[52];
+   char s_827ceb62[45];
    char s_b191aa47[53];
    char s_71fe510f[39];
    char s_7201eede[36];
@@ -1941,6 +1967,7 @@ static const struct
    char s_2c296537[14];
    char s_43ac80a0[12];
    char s_6959ce80[14];
+   char s_886631ec[17];
    char s_ebe994b4[14];
    char s_1c62c301[11];
    char s_a8bb35b6[9];
@@ -1992,6 +2019,7 @@ static const struct
 #ifdef HAVE_LAKKA
    char s_597f7f13[10];
 #endif
+   char s_89cbf597[21];
    char s_6bcbf80c[9];
    char s_f92cf1f5[7];
    char s_fff21e47[7];
@@ -2121,6 +2149,7 @@ static const struct
    char s_bfa23080[14];
    char s_723d3966[7];
    char s_ec326380[8];
+   char s_8a86d1de[16];
    char s_8fc1e4da[3];
    char s_14ed14d0[10];
    char s_5c87e95b[12];
@@ -2212,7 +2241,9 @@ static const struct
    char s_48431da6[7];
    char s_21d7a1f6[6];
    char s_d2fe3ed2[25];
+   char s_1edf58ee[22];
    char s_d74474ce[9];
+   char s_541958e5[8];
    char s_ba3e4ee6[12];
    char s_45816e1d[23];
    char s_c017f975[12];
@@ -2256,10 +2287,12 @@ static const struct
    char s_e0609921[22];
    char s_b3c7fa93[28];
    char s_f6a0db44[28];
+   char s_4eecff92[38];
    char s_0ca1128d[23];
    char s_65e6ea7c[6];
    char s_7b4dd5b5[8];
    char s_232d9d6e[8];
+   char s_7b6369fb[20];
    char s_26928c45[12];
    char s_b878faaf[12];
    char s_af483c4f[20];
@@ -2280,9 +2313,11 @@ static const struct
    char s_f4b6d13e[40];
    char s_25e89959[5];
    char s_a7468d68[27];
+   char s_b1d6fea6[9];
    char s_aa0659db[14];
    char s_49757b91[14];
    char s_660eb9c4[14];
+   char s_b6ca9df2[22];
 #if defined(RARCH_MOBILE)
    char s_b754294b[53];
    char s_b754294c[54];
@@ -2290,6 +2325,7 @@ static const struct
    char s_9ca4bbd7[34];
    char s_9ca4bbd8[35];
    char s_5508c468[60];
+   char s_ed6dfafb[54];
    char s_e59c4ded[43];
    char s_5a8511ce[53];
    char s_579b5e71[49];
@@ -2304,6 +2340,9 @@ static const struct
    char s_243da114[72];
    char s_f4805a53[28];
    char s_9211eac4[28];
+   char s_55809ae5[98];
+   char s_cee838cc[122];
+   char s_31e55c92[44];
    char s_0fd668d7[184];
    char s_657b9c76[84];
    char s_703e1cd4[145];
@@ -2327,7 +2366,11 @@ static const struct
    char s_daf6d7e2[49];
    char s_042502c4[49];
    char s_90ae9a9f[109];
+   char s_81b79d5b_0[500];
+   char s_81b79d5b_1[15];
    char s_c9235dab[56];
+   char s_330be970_0[500];
+   char s_330be970_1[7];
    char s_98b02857[230];
    char s_6c3c586d[200];
    char s_950e7a66[43];
@@ -2423,6 +2466,7 @@ static const struct
    char s_6d9948ee[79];
    char s_a1358509[101];
    char s_e08d9e1a[93];
+   char s_69ad6757[223];
    char s_2e28a155[52];
    char s_40e095c6[82];
    char s_6fc5fb8e[84];
@@ -2511,6 +2555,7 @@ static const struct
    char s_c3968f26[69];
    char s_a2b65159[77];
    char s_9831f77b[170];
+   char s_dd6f37e4[67];
    char s_79b8ce4a[92];
    char s_a1a8257e[104];
    char s_282f7955[80];
@@ -2524,7 +2569,9 @@ static const struct
    char s_b714023a[48];
    char s_b0d3045a[52];
    char s_fe3fb37b[54];
+   char s_d11127dc[123];
    char s_7b51019e[61];
+   char s_ebf9affa[74];
    char s_f743a358[113];
    char s_aa6534cc[28];
    char s_51d334ea[35];
@@ -2532,6 +2579,7 @@ static const struct
    char s_f2a19576[60];
    char s_b2a8d230[54];
    char s_11c7fa0c[103];
+   char s_28700070[83];
    char s_3f2095b2[62];
    char s_711cd0b9[80];
    char s_4db83281[114];
@@ -2554,6 +2602,7 @@ static const struct
    char s_b462c6e5[87];
    char s_5bdf892a[68];
    char s_aa39aae6[65];
+   char s_e531c55e[119];
    char s_deab66ee[94];
    char s_5ce79fca[154];
 #ifdef HAVE_GAME_AI
@@ -2576,6 +2625,7 @@ static const struct
    char s_8d99673a[45];
    char s_7fd5ef69[95];
    char s_7d9ab595[39];
+   char s_752f291c[58];
    char s_9eb26572[46];
    char s_50707595[85];
    char s_976074ee[158];
@@ -2831,6 +2881,7 @@ static const struct
    char s_87ac0bd1[60];
    char s_236ddb2d[81];
    char s_d27e63b2[219];
+   char s_2297ba83[257];
    char s_32728f95[101];
    char s_c4eae01a[148];
    char s_bb0852aa[191];
@@ -2842,6 +2893,7 @@ static const struct
    char s_7963c9c6[75];
    char s_ee3a489b[29];
    char s_236bd8d5[68];
+   char s_87c7d8b8[140];
 #ifdef HAVE_MIST
    char s_40e907c6[60];
 #endif
@@ -2852,6 +2904,7 @@ static const struct
    char s_6435c857[59];
 #endif
 #endif
+   char s_acca011c[112];
    char s_01efec73[51];
    char s_d3fc9970[59];
    char s_740bd7c4[65];
@@ -2867,7 +2920,9 @@ static const struct
    char s_aebcb136[154];
    char s_8b636a26[28];
    char s_8f707459[50];
+   char s_5aa622cc[209];
    char s_2b908073[228];
+   char s_64bea160[211];
    char s_97c62766[164];
    char s_6f458a85[90];
    char s_41702fdc[64];
@@ -2875,6 +2930,7 @@ static const struct
    char s_0a583569[116];
    char s_5b821b48[59];
    char s_5c6a50d2[109];
+   char s_c4d0ac0a[44];
    char s_84127a47[83];
    char s_a47f53ed[122];
    char s_cbdab193[245];
@@ -2883,7 +2939,12 @@ static const struct
    char s_70e21550[53];
    char s_f3e3ccc1[47];
    char s_0ca85937[48];
+   char s_23709d35[60];
+   char s_48b0d8fa[61];
    char s_9ce2f939[107];
+   char s_20f7870f[48];
+   char s_ed2240de[33];
+   char s_51e884d7[71];
 #ifdef HAVE_MICROPHONE
 #if !defined(RARCH_CONSOLE)
    char s_b40b91b9[114];
@@ -3020,6 +3081,7 @@ static const struct
    char s_79553ba5[39];
    char s_a5b1e615[40];
    char s_03195749[268];
+   char s_61fe415a[74];
    char s_d78d776f[89];
    char s_ee99b729[35];
    char s_94b84bf7[120];
@@ -3045,9 +3107,11 @@ static const struct
    char s_70a53ed8[33];
    char s_78c7d8fd[100];
    char s_d86c49f4[127];
+   char s_c84a34ce[174];
    char s_d4095cc4[177];
    char s_49a0a568[116];
    char s_e75f4bb2[160];
+   char s_00a68235[134];
    char s_e33b9334[100];
    char s_7ff41c9a[123];
    char s_fb6c33d8[63];
@@ -3083,6 +3147,7 @@ static const struct
    char s_c5d2f4b0[51];
    char s_7c5226bd[55];
    char s_d99ba008[58];
+   char s_3336d0a9[137];
    char s_e072c830[26];
    char s_96f1fa3d[57];
    char s_8d6d6fa8[29];
@@ -3155,6 +3220,7 @@ static const struct
    char s_0a8d4a2c[54];
    char s_d4c47f59[116];
    char s_86d4b7cd[53];
+   char s_6fed6990[118];
    char s_b775da75[111];
    char s_5ae6337d[66];
    char s_5ae9d14c[161];
@@ -3289,6 +3355,7 @@ static const struct
 #ifdef HAVE_LAKKA
    char s_f77f7a41[86];
 #endif
+   char s_e7cb5685[49];
    char s_2beab583[40];
    char s_a1c071eb[71];
    char s_0d9ceefa[100];
@@ -3360,6 +3427,7 @@ static const struct
    char s_698d5124[103];
    char s_7e43d750[181];
    char s_87ca7bc6[157];
+   char s_cfa51e8c[343];
    char s_b62c2f7e[319];
    char s_456fcbc9[350];
    char s_82fab47a[27];
@@ -3422,6 +3490,7 @@ static const struct
    char s_3c679f0a[304];
    char s_5b059407[152];
    char s_36033606[160];
+   char s_d62ed5dc[363];
    char s_2e69508b[328];
    char s_7e96b5ce[41];
    char s_3547866d[159];
@@ -3459,7 +3528,9 @@ static const struct
    char s_6ac06624[147];
    char s_f765b650[57];
    char s_7059a595[74];
+   char s_6d1448c0[57];
    char s_cf0b487b[81];
+   char s_840f4569[36];
    char s_c4928773[43];
    char s_4059cb1a[35];
    char s_d9bcee6b[57];
@@ -3694,6 +3765,7 @@ static const struct
    char s_55479240[43];
    char s_db6ac45f[49];
    char s_d7c90346[46];
+   char s_4312c647[30];
    char s_e4f79c50[51];
    char s_8d677b5b[72];
    char s_e68913bc[54];
@@ -3922,6 +3994,7 @@ static const struct
    char s_676d783e[75];
    char s_c9e2427f[49];
    char s_a15486f0[24];
+   char s_604cc576[55];
    char s_f38897e5[52];
    char s_7200d586[55];
    char s_7eb26812[16];
@@ -3987,6 +4060,7 @@ static const struct
    char s_0110d0c7[26];
    char s_c6156015[33];
    char s_0e625dbe[40];
+   char s_ca50dc6d[40];
    char s_9d2c8cfb[11];
    char s_7675f215[21];
    char s_843b6a7b[37];
@@ -4001,6 +4075,8 @@ static const struct
    char s_94fc1cd0[18];
    char s_2aaf8414[16];
    char s_28a4c280[23];
+   char s_ae2838e7[24];
+   char s_f5c32889[29];
    char s_d085ad84[52];
    char s_e0f3f7b7[126];
    char s_4f18c9d0[46];
@@ -4016,6 +4092,7 @@ static const struct
    char s_2dbb6496[22];
 } msg_hash_hu_blob =
 {
+   "AI szolg\303\241ltat\303\241s megval\303\263s\303\255t\303\241sa",
    "Emul\303\241tor",
    "1 bites, maximum \303\251rt\303\251k = 0x01",
    "16 bites, maximum \303\251rt\303\251k = 0xFFFF",
@@ -4040,6 +4117,8 @@ static const struct
    "K\303\266vetkez\305\221 csal\303\241s futtat\303\241sa, ha \303\211rt\303\251k < Mem\303\263ria",
    "K\303\266vetkez\305\221 csal\303\241s futtat\303\241sa, ha \303\211rt\303\251k != Mem\303\263ria",
    "Be\303\241ll\303\255t\303\241s \303\251rt\303\251kre",
+   "Egyedi v\303\255zszintes eltol\303\241s",
+   "Egyedi f\303\274gg\305\221leges eltol\303\241s",
    "A RetroAchievements kiszolg\303\241l\303\263 nem el\303\251rhet\305\221. A bek\303\274ld\303\251"
    "s mindaddig \303\272jra lesz pr\303\263b\303\241lva, am\303\255g nem siker\303\274l, vagy az alk"
    "almaz\303\241s nyitva marad.",
@@ -4118,6 +4197,9 @@ static const struct
    "\303\241rb\303\263l. Ha a magok k\303\266nyvt\303\241ra egy k\303\266nyvt\303\241r, akkor a men"
    "\303\274ben enn\303\251l feljebb nem lehet l\303\251pni. Ha a magok k\303\266nyvt\303\241ra egy "
    "f\303\241jlra mutat, a men\303\274 az ezt tartalmaz\303\263 k\303\266nyvt\303\241rban indul.",
+   "\303\232j lemez kiv\303\241laszt\303\241sa a f\303\241jlrendszerb\305\221l \303\251s hozz\303"
+   "\241ad\303\241s a list\303\241hoz. \nFigyelem: ez egy r\303\251gi funkci\303\263, aj\303\241nlot"
+   "t ink\303\241bb M3U f\303\241jlokat haszn\303\241lni a t\303\266bblemezes c\303\255mekhez.",
    "N\303\251h\303\241ny mag le tudja mag\303\241t \303\241ll\303\255tani. Ha ez a be\303\241ll\303"
    "\255t\303\241s ki van kapcsolva, a le\303\241ll\303\255t\303\241si folyamat a RetroArch-ot is le"
    "\303\241ll\303\255tja.\n Bekapcsolva egy dummy mag t\303\266lt\305\221dik be, \303\255gy a Retro"
@@ -4309,6 +4391,11 @@ static const struct
    "Minden ment\303\251s f\303\241jl (*.srm) ment\303\251se ebbe a k\303\266nyvt\303\241rba. Ez a .r"
    "t, .psrm stb. f\303\241jlokat is tartalmazza. Parancssori opci\303\263kkal fel\303\274lb\303\255"
    "r\303\241lhat\303\263.",
+   "A j\303\241t\303\251k\303\241ll\303\241s automatikus ment\303\251se, m\303\241sodpercben m\303"
+   "\251rt rendszeres id\305\221k\303\266z\303\266nk\303\251nt. Az \303\241ll\303\241s rendszeres me"
+   "nt\303\251s\303\251hez haszn\303\241lhat\303\263, k\303\274l\303\266n\303\266sen olyan eszk\303"
+   "\266z\303\266k\303\266n, amik v\303\241ratlanul lekapcsolhatnak akku vagy m\303\241s ok miatt. A"
+   " 0-s \303\251rt\303\251k kikapcsolja ezt a funkci\303\263t.",
    "J\303\241t\303\251k\303\241ll\303\241s elment\303\251se az \303\251ppen kiv\303\241lasztott reke"
    "szbe. Figyelem: ezek az \303\241llapotment\303\251sek rendszerint nem hordozhat\303\263ak \303"
    "\251s ugyanezen mag m\303\241s verzi\303\263j\303\241val sem felt\303\251tlen m\305\261k\303\266"
@@ -4526,6 +4613,7 @@ static const struct
    "< Rezg\303\251s \303\251rt\303\251ke",
    "!= Rezg\303\251s \303\251rt\303\251ke",
    "Kiseg\303\255t\305\221 lehet\305\221s\303\251gek enged\303\251lyez\303\251se",
+   "Sz\303\266vegfelolvas\303\263 motor",
    "Sz\303\266vegfelolvas\303\263 sebess\303\251ge",
    "Kiseg\303\255t\305\221 lehet\305\221s\303\251gek",
    "Jelsz\303\263",
@@ -4577,7 +4665,11 @@ static const struct
    "Kever\305\221",
    "Hang n\303\251m\303\255t\303\241sa gyors\303\255t\303\241skor",
    "Hang gyors\303\255tott lej\303\241tsz\303\241sa gyors\303\255t\303\241skor",
+   "\303\232jramintav\303\251telez\303\251s fixpontos eg\303\251szk\303\251nt (tipp)",
    "Hangsz\305\261r\305\221k",
+   "Hangform\303\241tum egyeztet\303\251s (tipp)",
+   "Lebeg\305\221pontos",
+   "16 bites eg\303\251sz",
    "Hangk\303\251sleltet\303\251s (ms)",
    "Elcs\303\272sz\303\241s maximuma",
    "Kever\305\221 n\303\251m\303\255t\303\241sa",
@@ -4627,7 +4719,10 @@ static const struct
 #ifdef _3DS
    "Az als\303\263 k\303\251perny\305\221 be\303\251p\303\255tett m\303\251diaf\303\241jljainak k"
    "\303\266nyvt\303\241ra",
+   "Bet\305\261sz\303\255n, k\303\251k komponens",
+   "Bet\305\261sz\303\255n, z\303\266ld komponens",
    "Bet\305\261sz\303\255n \303\241tl\303\241tszatlans\303\241ga",
+   "Bet\305\261sz\303\255n, piros komponens",
    "Bet\305\261k\303\251szlet enged\303\251lyez\303\251se",
    "Bet\305\261m\303\251ret",
 #endif
@@ -5283,6 +5378,7 @@ static const struct
    "Kontrollerprofilok",
    "Kontroller",
    "Bill",
+   "Kick stream kulcs",
    "Szervizek",
 #ifdef HAVE_LAKKA_SWITCH
    "Nintendo Switch be\303\241ll\303\255t\303\241sok",
@@ -5390,6 +5486,9 @@ static const struct
    "Kioszk m\303\263d",
    "Men\303\274 k\303\251psebess\303\251g korl\303\241toz\303\241sa",
    "F\303\241jlb\303\266ng\303\251sz\305\221",
+   "Bet\305\261sz\303\255n, k\303\251k komponens",
+   "Bet\305\261sz\303\255n, z\303\266ld komponens",
+   "Bet\305\261sz\303\255n, piros komponens",
    "\303\201tl\303\241tszatlans\303\241g",
    "F\303\251nyer\305\221",
    "V\303\255zszintes anim\303\241ci\303\263",
@@ -5419,6 +5518,7 @@ static const struct
    "B\303\251lyegk\303\251pek felcser\303\251l\303\251se",
    "Kapcsol\303\263ikonok",
    "B\303\251lyegk\303\251pek k\303\251sleltet\303\251se (ms)",
+   "B\303\251lyegk\303\251pek ditherel\303\251se",
    "B\303\251lyegk\303\251p m\303\251retez\303\251s\303\251nek m\303\263dja",
    "\303\201tl\303\241tsz\303\263s\303\241g",
    "Visszat\303\251r\303\251s a tartalomhoz j\303\241t\303\251k\303\241ll\303\241sok kezel\303\251se"
@@ -5435,6 +5535,7 @@ static const struct
    "G\303\266rget\303\251s gyors\303\255t\303\241sa",
    "Kin\303\251zet",
    "\"Konfigur\303\241ci\303\263s f\303\241jlok\" l\303\241that\303\263",
+   "Meger\305\221s\303\255t\305\221 ablakok megjelen\303\255t\303\251se",
 #ifdef HAVE_MIST
    "\"Magok kezel\303\251se\" l\303\241that\303\263",
 #endif
@@ -5445,6 +5546,7 @@ static const struct
    "\"Lemez kiad\303\241sa\" l\303\241that\303\263",
 #endif
 #endif
+   "Teljes \303\272tvonal mutat\303\241sa",
    "\"S\303\272g\303\263\" l\303\241that\303\263",
    "\"Inform\303\241ci\303\263k\" l\303\241that\303\263",
    "\"Tartalom bet\303\266lt\303\251se\" l\303\241that\303\263",
@@ -5465,7 +5567,9 @@ static const struct
    "\"OK\" hang",
    "\"G\303\266rget\303\251s\" hang",
    "Kezd\305\221oldal",
+   "Mip Mapping",
    "H\303\241tt\303\251r a b\303\251lyegk\303\251pekhez",
+   "Hangos anim\303\241lt b\303\251lyegk\303\251p",
    "B\303\251lyegk\303\251p felsk\303\241l\303\241z\303\241s hat\303\241ra",
    "Sima g\303\266rd\303\274l\305\221szalag",
    "G\303\266rd\303\274l\305\221szalag sebess\303\251ge",
@@ -5475,6 +5579,7 @@ static const struct
    "A rendszer sz\303\255nt\303\251m\303\241j\303\241nak haszn\303\241lata",
    "Men\303\274elemek l\303\241that\303\263s\303\241ga",
    "H\303\241tt\303\251rk\303\251p",
+   "H\303\241tt\303\251rk\303\251p \303\241tl\303\241tszatlans\303\241ga",
    "Grafikus widgetek",
    "Grafikus widgetek automatikus m\303\251retez\303\251se",
    "Grafikus widgetek m\303\251ret\303\251nek fel\303\274lb\303\255r\303\241lata",
@@ -5484,6 +5589,7 @@ static const struct
    "V\303\255zszintes ikon kiemel\303\251s anim\303\241ci\303\263ja",
    "Fel/le mozg\303\241s anim\303\241ci\303\263ja",
    "F\305\221men\303\274 megnyit\303\241s/becsuk\303\241s anim\303\241ci\303\263ja",
+   "V\303\255zszintes lista megjelen\303\255t\303\251se",
    "C\303\255msor megjelen\303\255t\303\251se",
    "B\303\251lyegk\303\251p m\303\251retez\303\251s szorz\303\263ja",
    "C\303\255msor marg\303\263ja",
@@ -5721,6 +5827,7 @@ static const struct
    "Sz\303\255n\303\266ssze\303\241ll\303\255t\303\241s",
    "Kit\303\266lt\303\251si szorz\303\263",
    "G\303\266rd\303\274l\305\221szalag a tartalom metaadataihoz",
+   "Az oldals\303\263 s\303\241v megjelen\303\255t\303\251se",
    "J\303\241t\303\251klista rendez\303\251se a r\303\266vid\303\255tett n\303\251v szerint (\303"
    "\272jraind\303\255t\303\241s sz\303\274ks\303\251ges)",
    "B\303\251lyegk\303\251p m\303\251retez\303\251s szorz\303\263ja",
@@ -6121,6 +6228,7 @@ static const struct
    "Ment\303\251s f\303\241jlok",
    "J\303\241t\303\251k\303\241ll\303\241sok ment\303\251se a tartalom k\303\266nyvt\303\241r\303"
    "\241ba",
+   "Automatikus j\303\241t\303\251k\303\241ll\303\241s ment\303\251s id\305\221k\303\266ze",
    "J\303\241t\303\251k\303\241ll\303\241s sorsz\303\241m\303\241nak automatikus l\303\251ptet\303"
    "\251se",
    "J\303\241t\303\251k\303\241ll\303\241s automatikus bet\303\266lt\303\251se",
@@ -6302,6 +6410,7 @@ static const struct
    "Frontend neve",
    "Git verzi\303\263",
    "Lakka verzi\303\263",
+   "MoltenVK verzi\303\263",
    "T\303\241pell\303\241t\303\241s",
    "Felt\303\266ltve",
    "T\303\266lt\303\251s",
@@ -6353,6 +6462,7 @@ static const struct
 #ifdef HAVE_LAKKA
    "Id\305\221z\303\263na",
 #endif
+   "Id\305\221 megjelen\303\255t\303\251se",
    "ezel\305\221tt",
    "nappal",
    "nappal",
@@ -6484,6 +6594,7 @@ static const struct
    "Kiterjesztett",
    "Szuper",
    "Sz\303\251les",
+   "Cs\303\272csf\303\251nyer\305\221",
    "Ki",
    "F\303\251nyer\305\221",
    "Scanline-ok",
@@ -6577,7 +6688,9 @@ static const struct
    "Egyedi",
    "Helyi",
    "K\303\266zvet\303\255t\303\251s min\305\221s\303\251ge",
+   "Kimeneti bitm\303\251lys\303\251g",
    "10 bites",
+   "8 bites",
    "Automatikus",
    "VSync v\303\241lt\303\263peri\303\263dus",
    "Automatikus",
@@ -6625,10 +6738,12 @@ static const struct
    "Wi-Fi enged\303\251lyez\303\251se",
    "Csatlakoz\303\241s a h\303\241l\303\263zathoz",
    "Csatlakoz\303\241s a h\303\241l\303\263zathoz",
+   "A sz\303\255n\303\266ssze\303\241ll\303\255t\303\241s alfa \303\251rt\303\251ke",
    "Aktu\303\241lis men\303\274 ikonja",
    "Nincs",
    "Norm\303\241l",
    "C\303\255msor",
+   "Ikonok az elemekhez",
    "Bet\305\261t\303\255pus",
    "Automatikus",
    "Automatikus, inverz",
@@ -6649,9 +6764,11 @@ static const struct
    "B\303\251lyegk\303\251pek f\303\274gg\305\221leges elrendez\303\251se",
    "Igen",
    "YouTube streamel\303\251si kulcs",
+   "HDR m\303\263d",
    "Shader preset",
    "Shader preset",
    "Shader preset",
+   "Kimeneti bitm\303\251lys\303\251g",
 #if defined(RARCH_MOBILE)
    "N\303\251z\305\221ablak v\303\255zszintes eltol\303\241sa (\303\241ll\303\263 n\303\251zetben)",
    "N\303\251z\305\221ablak f\303\274gg\305\221leges eltol\303\241sa (\303\241ll\303\263 n\303\251ze"
@@ -6661,6 +6778,7 @@ static const struct
    "N\303\251z\305\221ablak f\303\274gg\305\221leges eltol\303\241sa",
    "Sz\303\266vegfelolvas\303\263 enged\303\251lyez\303\251se a men\303\274 navig\303\241l\303\241s"
    "\303\241hoz.",
+   "A narr\303\241tor \303\241ltal haszn\303\241lt sz\303\266vegfelolvas\303\263 motor.",
    "A sz\303\266vegfelolvas\303\263 hangj\303\241nak sebess\303\251ge.",
    "A Kiseg\303\255t\305\221 lehet\305\221s\303\251gek narr\303\241tor be\303\241ll\303\255t\303\241"
    "sai.",
@@ -6690,6 +6808,11 @@ static const struct
    "rtalom beolvas\303\241s\303\241val.",
    "Hozz\303\241ad\303\241s a kedvencekhez.",
    "Hozz\303\241ad\303\241s a kedvencekhez.",
+   "A hangs\303\241v hozz\303\241ad\303\241sa egy szabad hangfolyam helyre. Ha nincs szabad hely, ne"
+   "m t\303\266rt\303\251nik semmi.",
+   "A hangs\303\241v hozz\303\241ad\303\241sa egy szabad hangfolyam helyre, \303\251s annak elind"
+   "\303\255t\303\241sa. Ha nincs szabad hely, nem t\303\266rt\303\251nik semmi.",
+   "A bejegyz\303\251s hozz\303\241ad\303\241sa j\303\241t\303\251klist\303\241hoz.",
    "A ford\303\255t\303\241s v\303\251grehajt\303\241si m\303\263dja. HTTP eset\303\251n a be\303"
    "\241ll\303\255tott t\303\241voli szervert haszn\303\241lja. Apple eset\303\251n a k\303\251sz"
    "\303\274l\303\251ken tal\303\241lhat\303\263 OCR \303\251s ford\303\255t\303\241si szolg\303\241"
@@ -6734,7 +6857,25 @@ static const struct
    "A hang automatikus eln\303\251m\303\255t\303\241sa gyors\303\255t\303\241skor.",
    "A hang gyors\303\255tott lej\303\241tsz\303\241sa gyors\303\255t\303\241skor. Megakad\303\241lyo"
    "zza a recseg\303\251st, de megemeli a hangmagass\303\241got.",
+   "Ha a mag 16 bites hangot ad ki, a fixpontos (eg\303\251sz\303\251rt\303\251kes) \303\272jraminta"
+   "v\303\251telez\305\221t haszn\303\241lja a lebeg\305\221pontos helyett. Minden platformon bitre "
+   "azonos kimenetet produk\303\241l, \303\255gy a hang azonos k\303\274l\303\266nf\303\251le fut"
+   "\303\241sok \303\251s rendszerek k\303\266zt. Ez a reproduk\303\241lhat\303\263s\303\241g miatt "
+   "\303\251rdekes, nem a sebess\303\251g miatt: ha a CPU rendelkezik vektor FPU-val, ott az eg\303"
+   "\251sz\303\251rt\303\251kes \303\272jramintav\303\251telez\305\221 lassabb. Nincs hat\303\241sa "
+   "a lebeg\305\221pontos hangot kiad\303\263 magokra, \303\251s vissza\303\241ll lebeg\305\221ponto"
+   "sra, ha nem kompatibilis DSP s",
+   "z\305\261r\305\221 akt\303\255v.",
    "A DSP hangb\305\221v\303\255tm\303\251nyek ebbe a k\303\266nyvt\303\241rba ker\303\274lnek.",
+   "A hangform\303\241tum, amit a hangilleszt\305\221 a kimeneti eszk\303\266zt\305\221l k\303\251r."
+   " \"Float\" a 32 bites lebeg\305\221pontos, \"Int16\" a 16 bites eg\303\251sz\303\251rt\303\251ke"
+   "s. Csak a form\303\241tumegyeztet\303\251sre k\303\251pes illeszt\305\221kre van hat\303\241ssal"
+   " (WASAPI, DirectSound, XAudio2, ALSA, SDL2), a t\303\266bbi fix form\303\241tumot haszn\303\241l"
+   ". Tipp: az illeszt\305\221 visszav\303\241lt, ha az eszk\303\266z visszautas\303\255tja a k\303"
+   "\251rt form\303\241tumot. Az Int16 \303\251rt\303\251k megfelel\305\221je az \303\232jramintav"
+   "\303\251telez\303\251s fixpontos eg\303\251szk\303\251nt tipp, amivel az eg\303\251sz hangkezel"
+   "\303\251s az eg\303\251sz tartom\303\241nyban ",
+   "marad.",
    "A legnagyobb hangk\303\251sleltet\303\251s ezredm\303\241sodpercben. Az illeszt\305\221 a t\303"
    "\251nyleges k\303\251sleltet\303\251st ezen \303\251rt\303\251k 50%-a k\303\266r\303\274l pr\303"
    "\263b\303\241lja tartani. Ha a hangilleszt\305\221 nem tudja a k\303\255v\303\241nt k\303\251sle"
@@ -6893,6 +7034,11 @@ static const struct
    "\251p\303\251s t\303\266rt\303\251nt bizonyos tr\303\263fe\303\241k ir\303\241ny\303\241ba.",
    "Az \303\274zenetek \303\251s k\303\251perny\305\221n megjelen\305\221 elemek l\303\241that\303"
    "\263s\303\241ga. A funkci\303\263t nem kapcsolja ki.",
+   "Inform\303\241ci\303\263 az \303\251ppen bet\303\266lt\305\221d\305\221 j\303\241t\303\251kr\303"
+   "\263l \303\251s a felhaszn\303\241l\303\263 jelenlegi halad\303\241s\303\241r\303\263l. \"Minden"
+   " azonos\303\255tott j\303\241t\303\251k\" be\303\241ll\303\255t\303\241s eset\303\251n a nyilv"
+   "\303\241nos tr\303\263fe\303\241kkal nem rendelkez\305\221 j\303\241t\303\251kokhoz is mutat "
+   "\303\266sszegz\303\251st.",
    "\303\211rtes\303\255t\303\251s megjelen\303\255t\303\251se tr\303\263fea felold\303\241sakor.",
    "Az aktu\303\241lis tartalom bez\303\241r\303\241sa. Az el nem mentett v\303\241ltoztat\303\241so"
    "k elveszhetnek.",
@@ -7056,6 +7202,8 @@ static const struct
    "A \"k\303\255s\303\251rleti\" magok is l\303\241tszanak a Mag let\303\266lt\305\221 list\303\241"
    "j\303\241ban. Ezek rendszerint csak fejleszt\303\251sre/tesztel\303\251sre szolg\303\241lnak, "
    "\303\241ltal\303\241nos haszn\303\241latra nem aj\303\241nlottak.",
+   "\303\232j j\303\241t\303\251klista l\303\251trehoz\303\241sa \303\251s az aktu\303\241lis elem h"
+   "ozz\303\241ad\303\241sa.",
    "Nat\303\255v, kis felbont\303\241s\303\272 jeleket ad ki kat\303\263dsug\303\241rcs\303\266ves k"
    "ijelz\305\221kkel val\303\263 haszn\303\241latra.",
    "V\303\241ltson nagy felbont\303\241sra a nagy felbont\303\241s\303\272 men\303\274k haszn\303"
@@ -7078,7 +7226,11 @@ static const struct
    "Bejegyz\303\251s elt\303\241vol\303\255t\303\241sa a j\303\241t\303\251klist\303\241b\303\263l.",
    "A j\303\241t\303\251klista elt\303\241vol\303\255t\303\241sa a f\303\241jlrendszerb\305\221l.",
    "A k\303\274l\303\266nf\303\251le f\303\241jlok alap\303\251rtelmezett k\303\266nyvt\303\241rai.",
+   "A Discord alkalmaz\303\241s t\303\266bb adatot mutat meg az \303\251ppen j\303\241tszott tartalo"
+   "mr\303\263l. Csak a nat\303\255v asztali klienssel el\303\251rhet\305\221.",
    "Inform\303\241ci\303\263k megtekint\303\251se a behelyezett m\303\251dialemezekr\305\221l.",
+   "\303\232j lemez kiv\303\241laszt\303\241sa a f\303\241jlrendszerb\305\221l \303\251s hozz\303"
+   "\241ad\303\241s a list\303\241hoz.",
    "Az aktu\303\241lis lemez kiv\303\241laszt\303\241sa az el\303\251rhet\305\221 lemezek list\303"
    "\241j\303\241b\303\263l. A virtu\303\241lis lemezt\303\241lca maradhat csukva.",
    "Lemezk\303\251pf\303\241jlok kezel\303\251se.",
@@ -7089,6 +7241,8 @@ static const struct
    "Ingyenes tartalom let\303\266lt\303\251se a kiv\303\241lasztott maghoz.",
    "Kiseg\303\255t\305\221 rendszerf\303\241jlok let\303\266lt\303\251se, amelyek sz\303\274ks\303"
    "\251gesek a mag helyes/optim\303\241lis m\305\261k\303\266d\303\251s\303\251hez.",
+   "B\303\251lyegk\303\251pek let\303\266lt\303\251se ehhez a tartalomhoz. A m\303\241r meglev\305"
+   "\221 k\303\251peket friss\303\255ti.",
    "A rendszer \303\241ltal haszn\303\241lt illeszt\305\221programok m\303\263dos\303\255t\303\241sa"
    ".",
    "A magok elkapcsolhatnak az \303\251ppen bet\303\266lt\303\266tt vide\303\263illeszt\305\221 hely"
@@ -7126,6 +7280,9 @@ static const struct
    "\251perny\305\221n.",
    "A visszateker\303\251s, a gyors\303\255t\303\241s \303\251s a lass\303\255t\303\241s be\303\241l"
    "l\303\255t\303\241sai.",
+   "A k\303\251pkocka idej\303\251nek m\303\251r\303\251s\303\251t befoly\303\241sol\303\263 be\303"
+   "\241ll\303\255t\303\241sok. Csak ha a t\303\266bbsz\303\241las megjelen\303\255t\303\251s ki van"
+   " kapcsolva.",
    "A frontend napl\303\263 szintje. A be\303\241ll\303\255tott \303\251rt\303\251k alatti napl\303"
    "\263bejegyz\303\251sek nem jelennek meg.",
    "Jav\303\255thatja a teljes\303\255tm\303\251nyt, cs\303\266kkentheti a k\303\251sleltet\303\251s"
@@ -7160,6 +7317,8 @@ static const struct
    "Lista karbantart\303\241sa a nemr\303\251g haszn\303\241lt j\303\241t\303\251kokr\303\263l, k"
    "\303\251pekr\305\221l, zen\303\251kr\305\221l \303\251s filmekr\305\221l.",
    "A j\303\241t\303\251klista elemeinek ikon t\303\255pusa.",
+   "T\303\266bb inform\303\241ci\303\263 megjelen\303\255t\303\251se err\305\221l a tartalomr\303"
+   "\263l.",
    "Inform\303\241ci\303\263k megjelen\303\255t\303\251se a rendszerr\305\221l.",
    "T\303\266bblemezes tartalom ind\303\255t\303\241sa eset\303\251n \303\241tv\303\241lt\303\241s a"
    "z utolj\303\241ra haszn\303\241lt lemezre.",
@@ -7657,6 +7816,11 @@ static const struct
    "\241sa \303\251s a hozz\303\241 tartoz\303\263 b\303\251lyegk\303\251pek bet\303\266lt\303\251se"
    " k\303\266zt. Legal\303\241bb 256 ms-os \303\251rt\303\251k a leglassabb eszk\303\266z\303\266k"
    "\303\266n is gyors, v\303\241rakoz\303\241smentes g\303\266rget\303\251st biztos\303\255t.",
+   "A b\303\251lyegk\303\251pek \303\251s h\303\241tt\303\251rk\303\251p sz\303\255ns\303\241voz\303"
+   "\263d\303\241s\303\241nak elsim\303\255t\303\241sa a men\303\274 korl\303\241tozott palett\303"
+   "\241j\303\241hoz igaz\303\255t\303\241ssal. A dithering minta a t\303\266bbi elemmel egy\303\274"
+   "tt nagy\303\255t\303\263dik nagy menu sk\303\241lafaktorokn\303\241l \303\251s megjelenhet text"
+   "\303\272rak\303\251nt, ekkor kapcsoljuk ki.",
    "A t\303\272l nagy b\303\251lyegk\303\251pek k\303\251perny\305\221h\303\266z igaz\303\255t\303"
    "\241s\303\241hoz haszn\303\241lt \303\272jramintav\303\251telez\303\251si elj\303\241r\303\241s.",
    "Amikor a gyorsmen\303\274 akt\303\255v, a tartalom l\303\241tsz\303\263dik a h\303\241tt\303\251"
@@ -7679,6 +7843,9 @@ static const struct
    "A men\303\274k\303\251perny\305\221 kin\303\251zete.",
    "A \"Konfigur\303\241ci\303\263s f\303\241jlok\" lehet\305\221s\303\251g jelenjen meg a f\305\221"
    "men\303\274ben.",
+   "Meger\305\221s\303\255t\303\251s k\303\251r\303\251se kil\303\251p\303\251s, \303\272jraind\303"
+   "\255t\303\241s, vagy tartalom bez\303\241r\303\241sa el\305\221tt. Kikapcsolva ezek a m\305\261v"
+   "eletek azonnal v\303\251grehajt\303\263dnak.",
 #ifdef HAVE_MIST
    "A \"Magok kezel\303\251se\" lehet\305\221s\303\251g jelenjen meg a f\305\221men\303\274ben.",
 #endif
@@ -7691,6 +7858,9 @@ static const struct
    "A \"Lemez kiad\303\241sa\" lehet\305\221s\303\251g jelenjen meg a f\305\221men\303\274ben.",
 #endif
 #endif
+   "A k\303\266nyvt\303\241rbe\303\241ll\303\255t\303\241sok teljes el\303\251r\303\251si \303\272tj"
+   "\303\241nak megjelen\303\255t\303\251se, a kiv\303\241lasztott k\303\266nyvt\303\241r neve helye"
+   "tt.",
    "A \"S\303\272g\303\263\" lehet\305\221s\303\251g jelenjen meg a f\305\221men\303\274ben.",
    "Az \"Inform\303\241ci\303\263k\" lehet\305\221s\303\251g jelenjen meg a f\305\221men\303\274ben.",
    "A \"Tartalom bet\303\266lt\303\251se\" lehet\305\221s\303\251g jelenjen meg a f\305\221men\303"
@@ -7715,10 +7885,18 @@ static const struct
    "\251rhet\305\221 az OK gomb mell\303\251 az ir\303\241nyv\303\241laszt\303\263t lenyomva.",
    "A men\303\274 hangbe\303\241ll\303\255t\303\241sai.",
    "A men\303\274 els\305\221k\303\251nt megjelen\305\221 oldala indul\303\241skor.",
+   "Mip-map gener\303\241l\303\241sa a men\303\274 k\303\251peihez. Az ikonok, b\303\251lyegk\303"
+   "\251pek \303\251s h\303\241tt\303\251rk\303\251pek az eredeti felbont\303\241sukn\303\241l kiseb"
+   "b m\303\251retben is sim\303\241k maradnak, a videomem\303\263ria n\303\251mileg megn\303\266vek"
+   "edett haszn\303\241lata \303\241r\303\241n.",
    "A b\303\251lyegk\303\251pek k\303\266r\303\274li felhaszn\303\241latlan ter\303\274let kit\303"
    "\266lt\303\251se t\303\266m\303\266r h\303\241tt\303\251rsz\303\255nnel. Ez jav\303\255tja a men"
    "\303\274 megjelen\303\251s\303\251t, ha v\303\241ltoz\303\263 m\303\251ret\305\261 b\303\251lyeg"
    "k\303\251pek szerepelnek benne, mert azokat egyenletes m\303\251retben jelen\303\255ti meg.",
+   "Az anim\303\241lt WebM b\303\251lyegk\303\251pek hangj\303\241nak lej\303\241tsz\303\241sa megje"
+   "len\303\255t\303\251s k\303\266zben. Vorbis \303\251s Opus hangf\303\241jlok is t\303\241mogatot"
+   "tak. A hang az anim\303\241ci\303\263val egy\303\274tt ism\303\251tl\305\221dik \303\251s a b"
+   "\303\251lyegk\303\251p bez\303\241r\303\241sakor meg\303\241ll.",
    "A megadott \303\251rt\303\251kn\303\251l kev\303\251sb\303\251 sz\303\251les/magas b\303\251lyeg"
    "k\303\251peket automatikusan felsk\303\241l\303\241zza. Jav\303\255tja a k\303\251pmin\305\221s"
    "\303\251get, m\303\251rs\303\251kelt hat\303\241sa van a teljes\303\255tm\303\251nyre.",
@@ -7734,6 +7912,7 @@ static const struct
    "\303\241sa.",
    "A menu h\303\241tter\303\251ben l\303\241that\303\263 k\303\251p. A k\303\251zzel vagy dinamikus"
    "an megadott k\303\251pek fel\303\274l\303\255rj\303\241k a sz\303\255nt\303\251m\303\241t.",
+   "A h\303\241tt\303\251rk\303\251p \303\241tl\303\241tszatlans\303\241gi szintje.",
    "D\303\255sz\303\255tett anim\303\241ci\303\263k, \303\251rtes\303\255t\303\251sek, jelz\303\251s"
    "ek \303\251s kezel\305\221szervek haszn\303\241lata.",
    "A d\303\255sz\303\255tett \303\251rtes\303\255t\303\251sek, jelz\303\251sek \303\251s kezel\305"
@@ -7757,8 +7936,15 @@ static const struct
    "A f\303\274lek k\303\266zt l\303\251pked\303\251skor lej\303\241tszott anim\303\241ci\303\263.",
    "A fel/le l\303\251pked\303\251skor lej\303\241tszott anim\303\241ci\303\263.",
    "Az almen\303\274be l\303\251p\303\251skor lej\303\241tszott anim\303\241ci\303\263.",
+   "A navig\303\241ci\303\263 f\305\221 v\303\255zszintes list\303\241j\303\241nak megjelen\303\255t"
+   "\303\251se.",
+   "A jelenlegi men\303\274 helyzet\303\251nek megjelen\303\255t\303\251se a fejl\303\251cben.",
    "A b\303\251lyegk\303\251p megjelen\305\221 m\303\251ret\303\251nek cs\303\266kkent\303\251se a l"
    "egnagyobb megengedett sz\303\251less\303\251g be\303\241ll\303\255t\303\241s\303\241val.",
+   "A c\303\255msor t\303\241vols\303\241ga a k\303\251perny\305\221 sz\303\251l\303\251t\305\221l.",
+   "A c\303\255msor v\303\255zszintes eltol\303\241sa.",
+   "A l\303\241that\303\263 elemek elhalv\303\241ny\303\255t\303\241sa a k\303\251perny\305\221 sz"
+   "\303\251lei k\303\266zel\303\251ben.",
 #ifdef HAVE_MICROPHONE
 #if !defined(RARCH_CONSOLE)
    "Az illeszt\305\221 \303\241ltal haszn\303\241lt alap\303\251rtelmezett bemeneti hangeszk\303\266"
@@ -8025,6 +8211,8 @@ static const struct
    " (t\303\241rs\303\255tott mag, j\303\241t\303\251kid\305\221) egy sort foglalnak el, a t\303\272"
    "l hossz\303\272 sorok g\303\266rget\305\221szalagk\303\251nt jelennek meg. Kikapcsolva mindegyik"
    " bejegyz\303\251s statikusan, sort\303\266r\303\251ssel t\303\266bb sorban jelenik meg.",
+   "A bal oldali s\303\241v navig\303\241ci\303\263s elemei \303\251s j\303\241t\303\251klist\303"
+   "\241i enged\303\251lyez\303\251se.",
    "A j\303\241t\303\251klist\303\241k a gy\303\241rt\303\263 neve n\303\251lk\303\274li bet\305\261"
    "rend szerint lesznek \303\241b\303\251c\303\251sorrendben.",
    "A b\303\251lyegk\303\251p oszlop m\303\251retez\303\251se.",
@@ -8081,6 +8269,9 @@ static const struct
    "Pontosabb ikonok megjelen\303\255t\303\251se az el\305\221zm\303\251nyek \303\251s j\303\241t"
    "\303\251klist\303\241k bejegyz\303\251seihez. V\303\241ltoz\303\263 hat\303\241sa van a teljes"
    "\303\255tm\303\251nyre.",
+   "A j\303\241t\303\251klista bejegyz\303\251seinek felc\303\255mk\303\251z\303\251se a jelenleg t"
+   "\303\241rs\303\255tott magokkal (ha \303\251pp van). Ez a be\303\241ll\303\255t\303\241s hat\303"
+   "\241stalan, ha a j\303\241t\303\251klista alcimk\303\251i be vannak kapcsolva.",
    "Plusz inform\303\241ci\303\263 megjelen\303\255t\303\251se a j\303\241t\303\251klista minden bej"
    "egyz\303\251s\303\251hez, mint p\303\251ld\303\241ul a t\303\241rs\303\255tott mag \303\251s a j"
    "\303\241t\303\251kid\305\221 (ha van). V\303\241ltoz\303\263 hat\303\241sa van a teljes\303\255t"
@@ -8091,6 +8282,9 @@ static const struct
    "A \"Legut\303\263bbi j\303\241t\303\251k\" d\303\241tum\303\241nak \303\251s idej\303\251nek for"
    "m\303\241tuma. A \"(de/du)\" jelz\303\251s\305\261 lehet\305\221s\303\251gek kis hat\303\241ssal"
    " lehetnek a teljes\303\255tm\303\251nyre n\303\251h\303\241ny platformon.",
+   "A j\303\241t\303\251klist\303\241k alc\303\255mk\303\251in megjelen\305\221 j\303\241t\303\251ki"
+   "d\305\221 fajt\303\241ja. Az ennek megfelel\305\221 napl\303\263z\303\241st enged\303\251lyezni "
+   "kell a \"Ment\303\251sek\" k\303\266zt.",
    "Bekapcsolva a b\303\251lyegk\303\251pek keres\303\251se a bejegyz\303\251s f\303\241jlneve alapj"
    "\303\241n t\303\266rt\303\251nik, a c\303\255mke helyett.",
    "A j\303\241t\303\251klist\303\241k ki\303\255r\303\241sa a m\303\241r elavult sz\303\266veges fo"
@@ -8149,6 +8343,9 @@ static const struct
    "g.",
    "A \"K\303\251perny\305\221k\303\251p k\303\251sz\303\255t\303\251se\" lehet\305\221s\303\251g je"
    "lenjen meg.",
+   "A j\303\241t\303\251k\303\241ll\303\241s ment\303\251s/bet\303\266lt\303\251s visszavon\303\241s"
+   "a lehet\305\221s\303\251gek l\303\241that\303\263ak. Rejtett \303\241llapotban a RetroPad Start "
+   "gombbal aktiv\303\241lhat\303\263.",
    "Filmfelv\303\251tel ind\303\255t\303\241sa.",
    "K\303\266zvet\303\255t\303\251s ind\303\255t\303\241sa a kiv\303\241lasztott platform fel\303"
    "\251.",
@@ -8283,6 +8480,9 @@ static const struct
    "talom munkak\303\266nyvt\303\241r\303\241ba pr\303\263b\303\241lja meg ki\303\255rni.",
    "J\303\241t\303\251k\303\241ll\303\241sok ment\303\251se a tartalom k\303\266nyvt\303\241r\303"
    "\241ba.",
+   "A j\303\241t\303\251k\303\241ll\303\241s automatikus elt\303\241rol\303\241s\303\241sa rendszere"
+   "s id\305\221k\303\266z\303\266nk\303\251nt (m\303\241sodpercekben). 0-ra \303\241ll\303\255tva k"
+   "ikapcsol.",
    "J\303\241t\303\251k\303\241ll\303\241s ment\303\251se el\305\221tt automatikusan megn\303\266vel"
    "i a sorsz\303\241mot. Bet\303\266lt\303\251skor a legnagyobbat haszn\303\241lja.",
    "Az automatikusan mentett j\303\241t\303\251k\303\241ll\303\241s bet\303\266lt\303\251se ind\303"
@@ -8493,6 +8693,7 @@ static const struct
    "Az id\305\221z\303\263na kiv\303\241laszt\303\241sa a d\303\241tum \303\251s id\305\221 tart\303"
    "\263zkod\303\241si helyhez \303\241ll\303\255t\303\241s\303\241hoz.",
 #endif
+   "Az id\305\221 megjelen\303\255t\303\251se a k\303\255v\303\241nt form\303\241tumban.",
    "Az ablak men\303\274sor\303\241nak megjelen\303\255t\303\251se.",
    "A tartalom visszat\303\251r a bet\303\266lt\303\266tt j\303\241t\303\251k\303\241ll\303\241s el"
    "\305\221tti \303\241llapotra.",
@@ -8645,6 +8846,12 @@ static const struct
    "A kijelz\305\221 teljes sz\303\255nsk\303\241l\303\241j\303\241nak haszn\303\241lata egy f\303"
    "\251nyesebb, tel\303\255tetteb k\303\251phez. Az eredeti j\303\241t\303\251khoz h\305\261bb sz"
    "\303\255nekhez a Pontos be\303\241ll\303\255t\303\241s javasolt.",
+   "A legf\303\251nyesebb \303\251rt\303\251k nit-ben, amire a k\303\251perny\305\221 k\303\251pes. "
+   "Ennyi lehet\305\221s\303\251g van m\303\251g a F\303\251nyer\305\221 felett a kiemel\303\251sre,"
+   " \303\255gy a HDR k\303\251pes magok tudj\303\241k, meddig lehet elmenni. A kijelz\305\221 speci"
+   "fik\303\241ci\303\263j\303\241ban szerepel, k\303\251ts\303\251g eset\303\251n maradjon 1000. A "
+   "k\303\251perny\305\221 k\303\251pess\303\251gein\303\251l nagyobbra \303\241ll\303\255tva a f"
+   "\303\251nyes r\303\251szletek t\303\272lvez\303\251rl\305\221dhetnek.",
    "A HDR f\303\251nyer\305\221 be\303\241ll\303\255t\303\241s nit-ben. A kijelz\305\221 fizikai f"
    "\303\251nyer\305\221 be\303\241ll\303\255t\303\241saival egy\303\274tt alkalmazand\303\263. Kezd"
    "\303\251snek \303\241ll\303\255tsuk ezt 80-ra \303\251s a kijelz\305\221 f\303\251nyerej\303\251"
@@ -8788,6 +8995,12 @@ static const struct
    "Egy enyhe elmos\303\241st ad a k\303\251phez, hogy a pixelek \303\251l\303\251t elsim\303\255tsa"
    ". Nagyon kis hat\303\241ssal van a teljes\303\255tm\303\251nyre. Shaderek haszn\303\241latakor a"
    "j\303\241nlott kikapcsolni.",
+   "A v\303\251gs\305\221 kimeneti fel\303\274let bitm\303\251lys\303\251ge, amikor a HDR ki van kap"
+   "csolva. A 10 bites be\303\241ll\303\255t\303\241s megsz\303\274nteti a s\303\241voz\303\263d\303"
+   "\241st, amelyet a k\303\251pet nagyon els\303\266t\303\251t\303\255t\305\221 shaderek okoznak, m"
+   "int pl. a CRT sug\303\241rprofilok \303\251s apert\303\272ra r\303\241cs maszkok. Ha a megjelen"
+   "\303\255t\305\221 vagy a kompozitor nem teszi lehet\305\221v\303\251, vissza\303\241ll 8 bitesre"
+   ". Bekapcsolt HDR eset\303\251n nincs hat\303\241sa.",
    "Egyedi VSync v\303\241lt\303\263peri\303\263dus. A megadott szorz\303\263val cs\303\266kkenti a "
    "monitor friss\303\255t\303\251si frekvenci\303\241j\303\241t. Az \"Automatikus\" be\303\241ll"
    "\303\255t\303\241s a mag \303\241ltal megadott k\303\251pfriss\303\255t\303\251s alapj\303\241n "
@@ -8866,8 +9079,11 @@ static const struct
    "s)",
    "Vezet\303\251kn\303\251lk\303\274li h\303\241l\303\263zatok keres\303\251se \303\251s a csatlako"
    "z\303\241s be\303\241ll\303\255t\303\241sa.",
+   "A sz\303\255n\303\266ssze\303\241ll\303\255t\303\241s alfa \303\251rt\303\251k\303\251nek m\303"
+   "\263dos\303\255t\303\241sa.",
    "Az aktu\303\241lis men\303\274 ikonja elrejthet\305\221 a v\303\255zszintes men\303\274 al\303"
    "\241 vagy a c\303\255msorba.",
+   "Ikon kirajzol\303\241sa a men\303\274elemekhez.",
    "M\303\241s bet\305\261t\303\255pus v\303\241laszt\303\241sa a men\303\274h\303\266z.",
    "Az XMB fel\303\274let m\303\241s elrendez\303\251se.",
    "A program be\303\241ll\303\255t\303\241sait tartalmaz\303\263 f\303\274l jelenjen meg.",
@@ -9149,6 +9365,7 @@ static const struct
    "Becen\303\251v k\303\274ld\303\251se a kliensnek sikertelen.",
    "Becen\303\251v k\303\274ld\303\251se a kiszolg\303\241l\303\263nak sikertelen.",
    "SRAM adatok k\303\274ld\303\251se a kliensnek sikertelen.",
+   "Lemez behelyez\303\251se sikertelen",
    "Utolj\303\241ra haszn\303\241lt lemez behelyez\303\251se sikertelen.",
    "Audio illeszt\305\221program ind\303\255t\303\241sa sikertelen. Folytat\303\241s hang n\303\251l"
    "k\303\274l.",
@@ -9414,6 +9631,7 @@ static const struct
    "\303\241l\303\241sa miatt.",
    "R\303\251gebbi mentett j\303\241t\303\251k\303\241ll\303\241s vissza\303\241ll\303\255tva.",
    "Mag vissza\303\241ll\303\255t\303\241sa: ",
+   "Az alap\303\251rtelmezett shader preset vissza\303\241ll\303\255tva erre",
    "Ment\303\251s f\303\241jl k\303\266nyvt\303\241r\303\241nak vissza\303\241ll\303\255t\303\241sa "
    "ide",
    "J\303\241t\303\251k\303\241ll\303\241s ment\303\251s k\303\266nyvt\303\241ra vissza\303\241ll"
@@ -9492,6 +9710,7 @@ static const struct
    "Metaadatok \303\241tkapcsol\303\241sa",
    "Eg\303\251sz k\303\251perny\305\221s b\303\251lyegk\303\251pek",
    "J\303\241t\303\251k\303\241ll\303\241s bet\303\266lt\303\251se visszavonva.",
+   "J\303\241t\303\251k\303\241ll\303\241s ment\303\251s visszavon\303\241sa...",
    "Ismeretlen",
    "Ismeretlen ford\303\255t\303\263",
    "Ismeretlen netplay parancs \303\251rkezett",
@@ -9506,6 +9725,8 @@ static const struct
    "\303\232jraind\303\255t\303\241s...",
    "Le\303\241ll\303\255t\303\241s...",
    "Libretro API verzi\303\263ja",
+   "Videosz\305\261r\305\221 letilt\303\241sa",
+   "Videosz\305\261r\305\221 enged\303\251lyez\303\251se",
    "A k\303\251pfriss\303\255t\303\251si gyakoris\303\241g %s Hz-re v\303\241ltozott.",
    "A n\303\251z\305\221ablak m\303\251ret\303\251nek kisz\303\241m\303\255t\303\241sa sikertelen! F"
    "olytat\303\241s nyers adatokkal. Ez val\303\263sz\303\255n\305\261leg nem fog j\303\263l m\305"
@@ -9529,7 +9750,7 @@ static const struct
  * compiler that pads this struct fails here instead of
  * misindexing at runtime. */
 typedef char msg_hash_hu_blob_check[
-      (sizeof(msg_hash_hu_blob) == (183148u
+      (sizeof(msg_hash_hu_blob) == (189374u
 #ifdef ANDROID
        + 316u
 #endif
@@ -9549,7 +9770,10 @@ typedef char msg_hash_hu_blob_check[
 #endif
 #ifdef _3DS
        + 62u
+       + 27u
+       + 28u
        + 31u
+       + 28u
        + 30u
        + 12u
 #endif
@@ -9941,6 +10165,7 @@ typedef char msg_hash_hu_blob_check[
 
 static const uint32_t msg_hash_hu_ids[] =
 {
+   (uint32_t)MENU_ENUM_LABEL_AI_SERVICE_BACKEND,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_HANDLER_TYPE_EMU,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_1,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_16,
@@ -9965,6 +10190,8 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_RUN_NEXT_IF_LT,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_RUN_NEXT_IF_NEQ,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_SET_TO_VALUE,
+   (uint32_t)MENU_ENUM_LABEL_CHEEVOS_APPEARANCE_PADDING_H,
+   (uint32_t)MENU_ENUM_LABEL_CHEEVOS_APPEARANCE_PADDING_V,
    (uint32_t)MENU_ENUM_LABEL_CHEEVOS_SERVER_DISCONNECTED,
    (uint32_t)MENU_ENUM_LABEL_CHEEVOS_SERVER_RECONNECTED,
    (uint32_t)MENU_ENUM_LABEL_EXPLORE_DELETE_VIEW,
@@ -10004,6 +10231,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_HELP_CONFIG_SAVE_MINIMAL,
    (uint32_t)MENU_ENUM_LABEL_HELP_CONFIG_SAVE_ON_EXIT,
    (uint32_t)MENU_ENUM_LABEL_HELP_CORE_LIST,
+   (uint32_t)MENU_ENUM_LABEL_HELP_DISK_IMAGE_APPEND,
    (uint32_t)MENU_ENUM_LABEL_HELP_DUMMY_ON_CORE_SHUTDOWN,
    (uint32_t)MENU_ENUM_LABEL_HELP_ENABLE_HOTKEY,
    (uint32_t)MENU_ENUM_LABEL_HELP_FASTFORWARD_RATIO,
@@ -10068,6 +10296,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_HELP_REPLAY_CHECKPOINT_DESERIALIZE,
    (uint32_t)MENU_ENUM_LABEL_HELP_REPLAY_CHECKPOINT_INTERVAL,
    (uint32_t)MENU_ENUM_LABEL_HELP_SAVEFILE_DIRECTORY,
+   (uint32_t)MENU_ENUM_LABEL_HELP_SAVESTATE_AUTOMATIC_INTERVAL,
    (uint32_t)MENU_ENUM_LABEL_HELP_SAVE_STATE,
    (uint32_t)MENU_ENUM_LABEL_HELP_SCAN_THIS_DIRECTORY,
    (uint32_t)MENU_ENUM_LABEL_HELP_SHADER_APPLY_CHANGES,
@@ -10140,6 +10369,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_RUMBLE_TYPE_LT_VALUE,
    (uint32_t)MENU_ENUM_LABEL_RUMBLE_TYPE_NEQ_VALUE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_ACCESSIBILITY_ENABLED,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_ACCESSIBILITY_NARRATOR_ENGINE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_ACCESSIBILITY_NARRATOR_SPEECH_SPEED,
    (uint32_t)MENU_ENUM_LABEL_VALUE_ACCESSIBILITY_SETTINGS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_ACCOUNTS_CHEEVOS_PASSWORD,
@@ -10190,7 +10420,11 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_ENABLE_MENU,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FASTFORWARD_MUTE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FASTFORWARD_SPEEDUP,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FASTPATH_S16,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FILTER_DIR,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FORMAT_NEGOTIATION,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FORMAT_NEGOTIATION_FLOAT,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FORMAT_NEGOTIATION_INT16,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_LATENCY,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_MAX_TIMING_SKEW,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_MIXER_MUTE,
@@ -10238,7 +10472,10 @@ static const uint32_t msg_hash_hu_ids[] =
 #endif
 #ifdef _3DS
    (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_ASSETS_DIRECTORY,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_BLUE,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_GREEN,
    (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_OPACITY,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_RED,
    (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_ENABLE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_SCALE,
 #endif
@@ -10885,6 +11122,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_JOYPAD_AUTOCONFIG_DIR,
    (uint32_t)MENU_ENUM_LABEL_VALUE_JOYPAD_DRIVER,
    (uint32_t)MENU_ENUM_LABEL_VALUE_KEYBOARD,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_KICK_STREAM_KEY,
    (uint32_t)MENU_ENUM_LABEL_VALUE_LAKKA_SERVICES,
 #ifdef HAVE_LAKKA_SWITCH
    (uint32_t)MENU_ENUM_LABEL_VALUE_LAKKA_SWITCH_OPTIONS,
@@ -10992,6 +11230,9 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_ENABLE_KIOSK_MODE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_ENUM_THROTTLE_FRAMERATE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FILE_BROWSER_SETTINGS,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FONT_COLOR_BLUE,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FONT_COLOR_GREEN,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FONT_COLOR_RED,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FRAMEBUFFER_OPACITY,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_HDR_BRIGHTNESS_NITS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_HORIZONTAL_ANIMATION,
@@ -11020,6 +11261,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_SWAP_THUMBNAILS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_SWITCH_ICONS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_THUMBNAIL_DELAY,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_THUMBNAIL_DITHER,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_THUMBNAIL_DOWNSCALER,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_RGUI_TRANSPARENCY,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SAVESTATE_RESUME,
@@ -11034,6 +11276,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SCROLL_FAST,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SETTINGS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CONFIGURATIONS,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CONFIRM,
 #ifdef HAVE_MIST
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CORE_MANAGER_STEAM,
 #endif
@@ -11044,6 +11287,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_EJECT_DISC,
 #endif
 #endif
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_FULL_PATHS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_HELP,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_INFORMATION,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_LOAD_CONTENT,
@@ -11064,7 +11308,9 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SOUND_OK,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SOUND_SCROLL,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_STARTUP_PAGE,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_TEXTURE_MIPMAPPING,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_THUMBNAIL_BACKGROUND_ENABLE,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_THUMBNAIL_PREVIEW_AUDIO,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_THUMBNAIL_UPSCALE_THRESHOLD,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_TICKER_SMOOTH,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_TICKER_SPEED,
@@ -11074,6 +11320,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_USE_PREFERRED_SYSTEM_COLOR_THEME,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_VIEWS_SETTINGS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WALLPAPER,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WALLPAPER_OPACITY,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGETS_ENABLE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_AUTO,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_FACTOR,
@@ -11082,6 +11329,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_ANIMATION_HORIZONTAL_HIGHLIGHT,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_ANIMATION_MOVE_UP_DOWN,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_ANIMATION_OPENING_MAIN_MENU,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_SHOW_HORIZONTAL_LIST,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_SHOW_TITLE_HEADER,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_THUMBNAIL_SCALE_FACTOR,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_TITLE_MARGIN,
@@ -11314,6 +11562,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_MENU_COLOR_THEME,
    (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_PADDING_FACTOR,
    (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_SCROLL_CONTENT_METADATA,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_SHOW_SIDEBAR,
    (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_SORT_AFTER_TRUNCATE_PLAYLIST_NAME,
    (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_THUMBNAIL_SCALE_FACTOR,
    (uint32_t)MENU_ENUM_LABEL_VALUE_OZONE_TRUNCATE_PLAYLIST_NAME,
@@ -11688,6 +11937,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_SAVEFILES_IN_CONTENT_DIR_ENABLE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SAVEFILE_DIRECTORY,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATES_IN_CONTENT_DIR_ENABLE,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_AUTOMATIC_INTERVAL,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_AUTO_INDEX,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_AUTO_LOAD,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SAVESTATE_AUTO_SAVE,
@@ -11865,6 +12115,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_FRONTEND_NAME,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_GIT_VERSION,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_LAKKA_VERSION,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_MOLTENVK_VERSION,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE_CHARGED,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE_CHARGING,
@@ -11916,6 +12167,7 @@ static const uint32_t msg_hash_hu_ids[] =
 #ifdef HAVE_LAKKA
    (uint32_t)MENU_ENUM_LABEL_VALUE_TIMEZONE,
 #endif
+   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_SHOW,
    (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_AGO,
    (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_DAYS_PLURAL,
    (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_DAYS_SINGLE,
@@ -12045,6 +12297,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_EXPAND_GAMUT_EXPANDED,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_EXPAND_GAMUT_SUPER,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_EXPAND_GAMUT_WIDE,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_MAX_NITS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_MODE_OFF,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_PAPER_WHITE_NITS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_HDR_SCANLINES,
@@ -12136,7 +12389,9 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_STREAMING_MODE_CUSTOM,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_STREAMING_MODE_LOCAL,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_STREAM_QUALITY,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SWAPCHAIN_BIT_DEPTH,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SWAPCHAIN_BIT_DEPTH_10,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SWAPCHAIN_BIT_DEPTH_8,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SWAPCHAIN_BIT_DEPTH_AUTO,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SWAP_INTERVAL,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SWAP_INTERVAL_AUTO,
@@ -12180,10 +12435,12 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_WIFI_ENABLED,
    (uint32_t)MENU_ENUM_LABEL_VALUE_WIFI_NETWORKS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_WIFI_NETWORK_SCAN,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_ALPHA_FACTOR,
    (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_CURRENT_MENU_ICON,
    (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_CURRENT_MENU_ICON_NONE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_CURRENT_MENU_ICON_NORMAL,
    (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_CURRENT_MENU_ICON_TITLE,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_ENTRY_ICONS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_FONT,
    (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_AUTOMATIC,
    (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_ICON_THEME_AUTOMATIC_INVERTED,
@@ -12204,9 +12461,11 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_VERTICAL_THUMBNAILS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_YES,
    (uint32_t)MENU_ENUM_LABEL_VALUE_YOUTUBE_STREAM_KEY,
+   (uint32_t)MENU_ENUM_LABEL_VIDEO_HDR_ENABLE,
    (uint32_t)MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_APPEND_TWO,
    (uint32_t)MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_PREPEND_TWO,
    (uint32_t)MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_TWO,
+   (uint32_t)MENU_ENUM_LABEL_VIDEO_SWAPCHAIN_BIT_DEPTH,
 #if defined(RARCH_MOBILE)
    (uint32_t)MENU_ENUM_LABEL_VIDEO_VIEWPORT_BIAS_PORTRAIT_X,
    (uint32_t)MENU_ENUM_LABEL_VIDEO_VIEWPORT_BIAS_PORTRAIT_Y,
@@ -12214,6 +12473,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VIDEO_VIEWPORT_BIAS_X,
    (uint32_t)MENU_ENUM_LABEL_VIDEO_VIEWPORT_BIAS_Y,
    (uint32_t)MENU_ENUM_SUBLABEL_ACCESSIBILITY_ENABLED,
+   (uint32_t)MENU_ENUM_SUBLABEL_ACCESSIBILITY_NARRATOR_ENGINE,
    (uint32_t)MENU_ENUM_SUBLABEL_ACCESSIBILITY_NARRATOR_SPEECH_SPEED,
    (uint32_t)MENU_ENUM_SUBLABEL_ACCESSIBILITY_SETTINGS,
    (uint32_t)MENU_ENUM_SUBLABEL_ACCOUNTS_LIST,
@@ -12228,6 +12488,9 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_ADD_CONTENT_LIST,
    (uint32_t)MENU_ENUM_SUBLABEL_ADD_TO_FAVORITES,
    (uint32_t)MENU_ENUM_SUBLABEL_ADD_TO_FAVORITES_PLAYLIST,
+   (uint32_t)MENU_ENUM_SUBLABEL_ADD_TO_MIXER,
+   (uint32_t)MENU_ENUM_SUBLABEL_ADD_TO_MIXER_AND_PLAY,
+   (uint32_t)MENU_ENUM_SUBLABEL_ADD_TO_PLAYLIST,
    (uint32_t)MENU_ENUM_SUBLABEL_AI_SERVICE_BACKEND,
    (uint32_t)MENU_ENUM_SUBLABEL_AI_SERVICE_ENABLE,
    (uint32_t)MENU_ENUM_SUBLABEL_AI_SERVICE_MODE,
@@ -12251,7 +12514,9 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_ENABLE_MENU,
    (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FASTFORWARD_MUTE,
    (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FASTFORWARD_SPEEDUP,
+   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FASTPATH_S16,
    (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FILTER_DIR,
+   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FORMAT_NEGOTIATION,
    (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_LATENCY,
    (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_MAX_TIMING_SKEW,
    (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_MIXER_MUTE,
@@ -12347,6 +12612,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_MASTERY,
    (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_PROGRESS_TRACKER,
    (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_SETTINGS,
+   (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_SUMMARY,
    (uint32_t)MENU_ENUM_SUBLABEL_CHEEVOS_VISIBILITY_UNLOCK,
    (uint32_t)MENU_ENUM_SUBLABEL_CLOSE_CONTENT,
    (uint32_t)MENU_ENUM_SUBLABEL_CLOUD_SYNC_ACCESS_KEY_ID,
@@ -12435,6 +12701,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_CORE_UPDATER_AUTO_EXTRACT_ARCHIVE,
    (uint32_t)MENU_ENUM_SUBLABEL_CORE_UPDATER_BUILDBOT_URL,
    (uint32_t)MENU_ENUM_SUBLABEL_CORE_UPDATER_SHOW_EXPERIMENTAL_CORES,
+   (uint32_t)MENU_ENUM_SUBLABEL_CREATE_NEW_PLAYLIST,
    (uint32_t)MENU_ENUM_SUBLABEL_CRT_SWITCHRES_SETTINGS,
    (uint32_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_HIRES_MENU,
    (uint32_t)MENU_ENUM_SUBLABEL_CRT_SWITCH_PORCH_ADJUST,
@@ -12448,7 +12715,9 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_DELETE_ENTRY,
    (uint32_t)MENU_ENUM_SUBLABEL_DELETE_PLAYLIST,
    (uint32_t)MENU_ENUM_SUBLABEL_DIRECTORY_SETTINGS,
+   (uint32_t)MENU_ENUM_SUBLABEL_DISCORD_ALLOW,
    (uint32_t)MENU_ENUM_SUBLABEL_DISC_INFORMATION,
+   (uint32_t)MENU_ENUM_SUBLABEL_DISK_IMAGE_APPEND,
    (uint32_t)MENU_ENUM_SUBLABEL_DISK_INDEX,
    (uint32_t)MENU_ENUM_SUBLABEL_DISK_OPTIONS,
    (uint32_t)MENU_ENUM_SUBLABEL_DISK_TRAY_EJECT,
@@ -12456,6 +12725,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_DOWNLOAD_CORE,
    (uint32_t)MENU_ENUM_SUBLABEL_DOWNLOAD_CORE_CONTENT,
    (uint32_t)MENU_ENUM_SUBLABEL_DOWNLOAD_CORE_SYSTEM_FILES,
+   (uint32_t)MENU_ENUM_SUBLABEL_DOWNLOAD_PL_ENTRY_THUMBNAILS,
    (uint32_t)MENU_ENUM_SUBLABEL_DRIVER_SETTINGS,
    (uint32_t)MENU_ENUM_SUBLABEL_DRIVER_SWITCH_ENABLE,
    (uint32_t)MENU_ENUM_SUBLABEL_DUMMY_ON_CORE_SHUTDOWN,
@@ -12478,6 +12748,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_FPS_UPDATE_INTERVAL,
    (uint32_t)MENU_ENUM_SUBLABEL_FRAMECOUNT_SHOW,
    (uint32_t)MENU_ENUM_SUBLABEL_FRAME_THROTTLE_SETTINGS,
+   (uint32_t)MENU_ENUM_SUBLABEL_FRAME_TIME_COUNTER_SETTINGS,
    (uint32_t)MENU_ENUM_SUBLABEL_FRONTEND_LOG_LEVEL,
    (uint32_t)MENU_ENUM_SUBLABEL_GAMEMODE_ENABLE_LINUX,
 #ifdef HAVE_GAME_AI
@@ -12500,6 +12771,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_HELP_LIST,
    (uint32_t)MENU_ENUM_SUBLABEL_HISTORY_LIST_ENABLE,
    (uint32_t)MENU_ENUM_SUBLABEL_ICON_THUMBNAILS,
+   (uint32_t)MENU_ENUM_SUBLABEL_INFORMATION,
    (uint32_t)MENU_ENUM_SUBLABEL_INFORMATION_LIST_LIST,
    (uint32_t)MENU_ENUM_SUBLABEL_INITIAL_DISK_CHANGE_ENABLE,
    (uint32_t)MENU_ENUM_SUBLABEL_INPUT_ADC_TYPE,
@@ -12755,6 +13027,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_SWAP_THUMBNAILS,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_SWITCH_ICONS,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_THUMBNAIL_DELAY,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_THUMBNAIL_DITHER,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_THUMBNAIL_DOWNSCALER,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_RGUI_TRANSPARENCY,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SAVESTATE_RESUME,
@@ -12766,6 +13039,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SCROLL_FAST,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SETTINGS,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_CONFIGURATIONS,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_CONFIRM,
 #ifdef HAVE_MIST
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_CORE_MANAGER_STEAM,
 #endif
@@ -12776,6 +13050,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_EJECT_DISC,
 #endif
 #endif
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_FULL_PATHS,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_HELP,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_INFORMATION,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_LOAD_CONTENT,
@@ -12791,7 +13066,9 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SINGLECLICK_PLAYLISTS,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SOUNDS,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_STARTUP_PAGE,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_TEXTURE_MIPMAPPING,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_THUMBNAIL_BACKGROUND_ENABLE,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_THUMBNAIL_PREVIEW_AUDIO,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_THUMBNAIL_UPSCALE_THRESHOLD,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_TICKER_SMOOTH,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_TICKER_SPEED,
@@ -12799,6 +13076,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_USE_PREFERRED_SYSTEM_COLOR_THEME,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_VIEWS_SETTINGS,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_WALLPAPER,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_WALLPAPER_OPACITY,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_WIDGETS_ENABLE,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_WIDGET_SCALE_AUTO,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_WIDGET_SCALE_FACTOR,
@@ -12807,7 +13085,12 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_ANIMATION_HORIZONTAL_HIGHLIGHT,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_ANIMATION_MOVE_UP_DOWN,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_ANIMATION_OPENING_MAIN_MENU,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_SHOW_HORIZONTAL_LIST,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_SHOW_TITLE_HEADER,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_THUMBNAIL_SCALE_FACTOR,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_TITLE_MARGIN,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_TITLE_MARGIN_HORIZONTAL_OFFSET,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_VERTICAL_FADE_FACTOR,
 #ifdef HAVE_MICROPHONE
 #if !defined(RARCH_CONSOLE)
    (uint32_t)MENU_ENUM_SUBLABEL_MICROPHONE_DEVICE,
@@ -12944,6 +13227,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_OZONE_MENU_COLOR_THEME,
    (uint32_t)MENU_ENUM_SUBLABEL_OZONE_PADDING_FACTOR,
    (uint32_t)MENU_ENUM_SUBLABEL_OZONE_SCROLL_CONTENT_METADATA,
+   (uint32_t)MENU_ENUM_SUBLABEL_OZONE_SHOW_SIDEBAR,
    (uint32_t)MENU_ENUM_SUBLABEL_OZONE_SORT_AFTER_TRUNCATE_PLAYLIST_NAME,
    (uint32_t)MENU_ENUM_SUBLABEL_OZONE_THUMBNAIL_SCALE_FACTOR,
    (uint32_t)MENU_ENUM_SUBLABEL_OZONE_TRUNCATE_PLAYLIST_NAME,
@@ -12969,9 +13253,11 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SETTINGS,
    (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SHOW_ENTRY_IDX,
    (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SHOW_HISTORY_ICONS,
+   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SHOW_INLINE_CORE_NAME,
    (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SHOW_SUBLABELS,
    (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SORT_ALPHABETICAL,
    (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SUBLABEL_LAST_PLAYED_STYLE,
+   (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_SUBLABEL_RUNTIME_TYPE,
    (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_USE_FILENAME,
    (uint32_t)MENU_ENUM_SUBLABEL_PLAYLIST_USE_OLD_FORMAT,
    (uint32_t)MENU_ENUM_SUBLABEL_PLAY_REPLAY,
@@ -13007,6 +13293,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_START_RECORDING,
    (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_START_STREAMING,
    (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_TAKE_SCREENSHOT,
+   (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_SHOW_UNDO_SAVE_LOAD_STATE,
    (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_START_RECORDING,
    (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_START_STREAMING,
    (uint32_t)MENU_ENUM_SUBLABEL_QUICK_MENU_STOP_RECORDING,
@@ -13079,6 +13366,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_SAVEFILES_IN_CONTENT_DIR_ENABLE,
    (uint32_t)MENU_ENUM_SUBLABEL_SAVEFILE_DIRECTORY,
    (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATES_IN_CONTENT_DIR_ENABLE,
+   (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATE_AUTOMATIC_INTERVAL,
    (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATE_AUTO_INDEX,
    (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATE_AUTO_LOAD,
    (uint32_t)MENU_ENUM_SUBLABEL_SAVESTATE_AUTO_SAVE,
@@ -13213,6 +13501,7 @@ static const uint32_t msg_hash_hu_ids[] =
 #ifdef HAVE_LAKKA
    (uint32_t)MENU_ENUM_SUBLABEL_TIMEZONE,
 #endif
+   (uint32_t)MENU_ENUM_SUBLABEL_TIME_SHOW,
    (uint32_t)MENU_ENUM_SUBLABEL_UI_MENUBAR_ENABLE,
    (uint32_t)MENU_ENUM_SUBLABEL_UNDO_LOAD_STATE,
    (uint32_t)MENU_ENUM_SUBLABEL_UNDO_SAVE_STATE,
@@ -13284,6 +13573,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HARD_SYNC_FRAMES,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_ENABLE,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_EXPAND_GAMUT,
+   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_MAX_NITS,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_PAPER_WHITE_NITS,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_SCANLINES,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_HDR_SETTINGS,
@@ -13346,6 +13636,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_SUBFRAMES,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHARED_CONTEXT,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SMOOTH,
+   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SWAPCHAIN_BIT_DEPTH,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SWAP_INTERVAL,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SYNCHRONIZATION_SETTINGS,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_THREADED,
@@ -13383,7 +13674,9 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_VRR_RUNLOOP_ENABLE,
    (uint32_t)MENU_ENUM_SUBLABEL_WIFI_DRIVER,
    (uint32_t)MENU_ENUM_SUBLABEL_WIFI_SETTINGS,
+   (uint32_t)MENU_ENUM_SUBLABEL_XMB_ALPHA_FACTOR,
    (uint32_t)MENU_ENUM_SUBLABEL_XMB_CURRENT_MENU_ICON,
+   (uint32_t)MENU_ENUM_SUBLABEL_XMB_ENTRY_ICONS,
    (uint32_t)MENU_ENUM_SUBLABEL_XMB_FONT,
    (uint32_t)MENU_ENUM_SUBLABEL_XMB_LAYOUT,
    (uint32_t)MENU_ENUM_SUBLABEL_XMB_MAIN_MENU_ENABLE_SETTINGS,
@@ -13618,6 +13911,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MSG_FAILED_TO_SEND_NICKNAME_TO_CLIENT,
    (uint32_t)MSG_FAILED_TO_SEND_NICKNAME_TO_HOST,
    (uint32_t)MSG_FAILED_TO_SEND_SRAM_DATA_TO_CLIENT,
+   (uint32_t)MSG_FAILED_TO_SET_DISK,
    (uint32_t)MSG_FAILED_TO_SET_INITIAL_DISK,
    (uint32_t)MSG_FAILED_TO_START_AUDIO_DRIVER,
    (uint32_t)MSG_FAILED_TO_START_MOVIE_RECORD,
@@ -13846,6 +14140,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MSG_RESTARTING_RECORDING_DUE_TO_DRIVER_REINIT,
    (uint32_t)MSG_RESTORED_OLD_SAVE_STATE,
    (uint32_t)MSG_RESTORING_CORE,
+   (uint32_t)MSG_RESTORING_DEFAULT_SHADER_PRESET_TO,
    (uint32_t)MSG_REVERTING_SAVEFILE_DIRECTORY_TO,
    (uint32_t)MSG_REVERTING_SAVESTATE_DIRECTORY_TO,
    (uint32_t)MSG_REWINDING,
@@ -13911,6 +14206,7 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MSG_TOGGLE_CONTENT_METADATA,
    (uint32_t)MSG_TOGGLE_FULLSCREEN_THUMBNAILS,
    (uint32_t)MSG_UNDID_LOAD_STATE,
+   (uint32_t)MSG_UNDOING_SAVE_STATE,
    (uint32_t)MSG_UNKNOWN,
    (uint32_t)MSG_UNKNOWN_COMPILER,
    (uint32_t)MSG_UNKNOWN_NETPLAY_COMMAND_RECEIVED,
@@ -13925,6 +14221,8 @@ static const uint32_t msg_hash_hu_ids[] =
    (uint32_t)MSG_VALUE_REBOOTING,
    (uint32_t)MSG_VALUE_SHUTTING_DOWN,
    (uint32_t)MSG_VERSION_OF_LIBRETRO_API,
+   (uint32_t)MSG_VIDEO_FILTER_ENABLE_OFF,
+   (uint32_t)MSG_VIDEO_FILTER_ENABLE_ON,
    (uint32_t)MSG_VIDEO_REFRESH_RATE_CHANGED,
    (uint32_t)MSG_VIEWPORT_SIZE_CALCULATION_FAILED,
    (uint32_t)MSG_VIRTUAL_DISK_TRAY_CLOSE,

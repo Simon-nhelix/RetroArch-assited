@@ -14,6 +14,7 @@
 
 static const struct
 {
+   char s_74d0bdad[25];
    char s_9a250c33[30];
    char s_dec692c9[33];
    char s_9a250c34[30];
@@ -36,6 +37,8 @@ static const struct
    char s_76fae911[35];
    char s_56581215[36];
    char s_6b45243b[18];
+   char s_43585d45[30];
+   char s_43585d53[27];
    char s_ea6df2a1[108];
    char s_bfb33e98[82];
    char s_87603f77[10];
@@ -252,6 +255,7 @@ static const struct
    char s_4e447c6c[36];
    char s_d9a51d02[12];
    char s_12e77e8f[9];
+   char s_98760b94[26];
    char s_af6007a1[19];
    char s_da068369[6];
    char s_daead8a5[5];
@@ -1067,6 +1071,7 @@ static const struct
    char s_5b3c8098[22];
    char s_ceb820ad[9];
    char s_63af41a7[25];
+   char s_a4b769ca[24];
 #ifdef HAVE_MIST
    char s_53788998[23];
 #endif
@@ -1077,6 +1082,7 @@ static const struct
    char s_5e519829[21];
 #endif
 #endif
+   char s_a6e5d0ee[30];
    char s_f228c6c5[14];
    char s_11926382[19];
    char s_645ae416[25];
@@ -1114,6 +1120,7 @@ static const struct
    char s_6b9ce765[55];
    char s_7742d553[36];
    char s_813d8d09[42];
+   char s_87f05947[23];
    char s_a771be4c[17];
    char s_204201cb[19];
    char s_5e8d5121[14];
@@ -1916,6 +1923,7 @@ static const struct
 #ifdef HAVE_LAKKA
    char s_597f7f13[8];
 #endif
+   char s_89cbf597[12];
    char s_6bcbf80c[6];
    char s_f92cf1f5[6];
    char s_fff21e47[4];
@@ -2280,6 +2288,7 @@ static const struct
    char s_4f627df2[38];
    char s_af2a7718[40];
    char s_4be2cc7b[34];
+   char s_11577805[18];
    char s_6cc5ba39[48];
    char s_5ac97310[53];
    char s_547057db[36];
@@ -3869,6 +3878,7 @@ static const struct
    char s_2dbb6496[31];
 } msg_hash_sv_blob =
 {
+   "Bak\303\244nde f\303\266r AI-tj\303\244nst",
    "1-Bit, Maximalt v\303\244rde = 0x01",
    "16-Bit, Maximalt v\303\244rde = 0xFFFF",
    "2-Bit, Maximalt v\303\244rde = 0x03",
@@ -3891,6 +3901,8 @@ static const struct
    "K\303\266r n\303\244sta fusk om v\303\244rde < minne",
    "K\303\266r n\303\244sta fusk om v\303\244rde != minne",
    "S\303\244tt till v\303\244rde",
+   "Manuell horisontell utfyllnad",
+   "Manuell vertikal utfyllnad",
    "RetroAchievements server g\303\245r inte att n\303\245. Kommer att f\303\266rs\303\266ka igen ti"
    "lls det lyckas eller appen st\303\244ngs.",
    "Alla v\303\244ntande f\303\266rfr\303\245gningar har synkroniserats till RetroAchievements-serve"
@@ -4335,6 +4347,7 @@ static const struct
    "\303\205tg\303\244rd f\303\266r Android kopplas fr\303\245n",
    "Programikon",
    "Resurser",
+   "\303\226ppna ASIO-kontrollpanel",
    "Blockera bildrutor",
    "Enhet",
    "Ljud",
@@ -5150,6 +5163,7 @@ static const struct
    "Rullningsacceleration",
    "Utseende",
    "Visa 'Konfigurationsfil'",
+   "Visa bekr\303\244ftelsel\303\245dor",
 #ifdef HAVE_MIST
    "Visa 'Hantera k\303\244rnor'",
 #endif
@@ -5160,6 +5174,7 @@ static const struct
    "Visa 'Mata ut skiva'",
 #endif
 #endif
+   "Visa fullst\303\244ndiga s\303\266kv\303\244gar",
    "Visa 'Hj\303\244lp'",
    "Visa 'Information'",
    "Visa 'L\303\244s in inneh\303\245ll'",
@@ -5197,6 +5212,7 @@ static const struct
    "\303\205sidos\303\244tt skalning av grafikwidgetar (f\303\266nsterl\303\244ge)",
    "Animering f\303\266r flytta upp\303\245t/ner\303\245t",
    "Animering f\303\266r huvudmenyns \303\266ppna/st\303\244nga",
+   "Visa horisontell lista",
    "Visa titelrubrik",
    "Miniatyrskalfaktor",
    "Titelmarginal",
@@ -6008,6 +6024,7 @@ static const struct
 #ifdef HAVE_LAKKA
    "Tidszon",
 #endif
+   "Visningstid",
    "sedan",
    "dagar",
    "dag",
@@ -6417,6 +6434,7 @@ static const struct
    "Till\303\244mpa fusk direkt efter v\303\244xling.",
    "Fusk\303\244ndringar kommer aktiveras direkt.",
    "Fuskfiler lagras i denna katalog.",
+   "Rensa fusklistan.",
    "L\303\244s in en fuskfil och ers\303\244tt befintliga fusk.",
    "L\303\244s in en fuskfil och l\303\244gg till i befintliga fusk.",
    "Spara aktuella fusk som en fuskfil.",
@@ -8654,7 +8672,7 @@ static const struct
  * compiler that pads this struct fails here instead of
  * misindexing at runtime. */
 typedef char msg_hash_sv_blob_check[
-      (sizeof(msg_hash_sv_blob) == (165564u
+      (sizeof(msg_hash_sv_blob) == (165779u
 #ifdef ANDROID
        + 361u
 #endif
@@ -9054,6 +9072,7 @@ typedef char msg_hash_sv_blob_check[
 
 static const uint32_t msg_hash_sv_ids[] =
 {
+   (uint32_t)MENU_ENUM_LABEL_AI_SERVICE_BACKEND,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_1,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_16,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_2,
@@ -9076,6 +9095,8 @@ static const uint32_t msg_hash_sv_ids[] =
    (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_RUN_NEXT_IF_LT,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_RUN_NEXT_IF_NEQ,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_SET_TO_VALUE,
+   (uint32_t)MENU_ENUM_LABEL_CHEEVOS_APPEARANCE_PADDING_H,
+   (uint32_t)MENU_ENUM_LABEL_CHEEVOS_APPEARANCE_PADDING_V,
    (uint32_t)MENU_ENUM_LABEL_CHEEVOS_SERVER_DISCONNECTED,
    (uint32_t)MENU_ENUM_LABEL_CHEEVOS_SERVER_RECONNECTED,
    (uint32_t)MENU_ENUM_LABEL_EXPLORE_DELETE_VIEW,
@@ -9287,6 +9308,7 @@ static const uint32_t msg_hash_sv_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_ANDROID_INPUT_DISCONNECT_WORKAROUND,
    (uint32_t)MENU_ENUM_LABEL_VALUE_APPICON_SETTINGS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_ASSETS_DIRECTORY,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_ASIO_CONTROL_PANEL,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_BLOCK_FRAMES,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_DEVICE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_DRIVER,
@@ -10102,6 +10124,7 @@ static const uint32_t msg_hash_sv_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SCROLL_FAST,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SETTINGS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CONFIGURATIONS,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CONFIRM,
 #ifdef HAVE_MIST
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CORE_MANAGER_STEAM,
 #endif
@@ -10112,6 +10135,7 @@ static const uint32_t msg_hash_sv_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_EJECT_DISC,
 #endif
 #endif
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_FULL_PATHS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_HELP,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_INFORMATION,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_LOAD_CONTENT,
@@ -10149,6 +10173,7 @@ static const uint32_t msg_hash_sv_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_FACTOR_WINDOWED,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_ANIMATION_MOVE_UP_DOWN,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_ANIMATION_OPENING_MAIN_MENU,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_SHOW_HORIZONTAL_LIST,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_SHOW_TITLE_HEADER,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_THUMBNAIL_SCALE_FACTOR,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_XMB_TITLE_MARGIN,
@@ -10950,6 +10975,7 @@ static const uint32_t msg_hash_sv_ids[] =
 #ifdef HAVE_LAKKA
    (uint32_t)MENU_ENUM_LABEL_VALUE_TIMEZONE,
 #endif
+   (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_SHOW,
    (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_AGO,
    (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_DAYS_PLURAL,
    (uint32_t)MENU_ENUM_LABEL_VALUE_TIME_UNIT_DAYS_SINGLE,
@@ -11314,6 +11340,7 @@ static const uint32_t msg_hash_sv_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_APPLY_AFTER_TOGGLE,
    (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_APPLY_CHANGES,
    (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_DATABASE_PATH,
+   (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_DELETE_ALL,
    (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_FILE_LOAD,
    (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_FILE_LOAD_APPEND,
    (uint32_t)MENU_ENUM_SUBLABEL_CHEAT_FILE_SAVE_AS,

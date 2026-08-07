@@ -73,6 +73,21 @@ static VkInstance                    cached_instance_vk;
 static VkDevice                      cached_device_vk;
 static retro_vulkan_destroy_device_t cached_destroy_device_vk;
 
+#ifdef __APPLE__
+/* On Apple platforms the Vulkan implementation is provided by MoltenVK
+ * (loaded dynamically, either directly or through the Vulkan loader).
+ * The version string is captured once, when the physical device is
+ * selected, and cached here so that the System Information menu can
+ * report it without needing a live Vulkan context. Empty until a
+ * context has been brought up at least once. */
+static char                          moltenvk_version_str[64];
+
+const char *vulkan_get_moltenvk_version(void)
+{
+   return moltenvk_version_str;
+}
+#endif
+
 #if 0
 #define WSI_HARDENING_TEST
 #endif
@@ -384,7 +399,15 @@ static void vulkan_debug_mark_object(VkDevice device,
    {
       char merged_name[1024];
       VkDebugUtilsObjectNameInfoEXT info;
+      /* strlcpy() returns the length of the SOURCE, not the number of
+       * bytes copied, so a name longer than the buffer would put
+       * merged_name + _len past the end and underflow the remaining
+       * size to near SIZE_MAX.  Every caller in tree passes a short
+       * literal, so this is not reachable today -- but the next one
+       * need not. */
       size_t _len                        = strlcpy(merged_name, name, sizeof(merged_name));
+      if (_len >= sizeof(merged_name))
+         _len                            = sizeof(merged_name) - 1;
       snprintf(merged_name + _len, sizeof(merged_name) - _len, " (%u)", count);
 
       info.sType                         = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
@@ -629,6 +652,32 @@ static bool vulkan_context_init_gpu(gfx_ctx_vulkan_data_t *vk)
    }
 
    free(gpus);
+
+#ifdef __APPLE__
+   /* Capture the MoltenVK version from the selected physical device.
+    * MoltenVK encodes its version into VkPhysicalDeviceProperties's
+    * driverVersion field as a decimal (major * 10000 + minor * 100 +
+    * patch) and derives the string it logs to the console the exact same
+    * way, so decode it identically here. This uses only core Vulkan 1.0
+    * data that is always populated; the legacy vkGetVersionStringsMVK
+    * entry point is no longer vended through the Vulkan loader, and the
+    * VK_KHR_driver_properties driverInfo string is not reliably filled
+    * for a standalone query. */
+   if (!moltenvk_version_str[0] && vk->context.gpu)
+   {
+      VkPhysicalDeviceProperties props;
+      unsigned dv, major, minor, patch;
+      vkGetPhysicalDeviceProperties(vk->context.gpu, &props);
+      dv    = (unsigned)props.driverVersion;
+      major = dv / 10000;
+      minor = (dv % 10000) / 100;
+      patch = dv % 100;
+      snprintf(moltenvk_version_str, sizeof(moltenvk_version_str),
+            "%u.%u.%u", major, minor, patch);
+      RARCH_LOG("[Vulkan] MoltenVK version: %s.\n", moltenvk_version_str);
+   }
+#endif
+
    return true;
 }
 
@@ -956,7 +1005,7 @@ static bool vulkan_context_init_device(gfx_ctx_vulkan_data_t *vk)
             cached_destroy_device_vk   = NULL;
          }
 
-         video_st->flags   |= VIDEO_FLAG_CACHE_CONTEXT_ACK;
+         video_driver_cache_context_ack_set();
          RARCH_LOG("[Vulkan] Using cached Vulkan context.\n");
       }
       else if (vkCreateDevice(vk->context.gpu, &device_info,
@@ -1018,8 +1067,7 @@ static const char *vulkan_optional_instance_extensions[] = {
 static VkInstance vulkan_context_create_instance_wrapper(void *opaque, const VkInstanceCreateInfo *create_info)
 {
    VkResult res;
-   uint32_t i, layer_count;
-   VkLayerProperties properties[128];
+   uint32_t i;
    gfx_ctx_vulkan_data_t *vk        = (gfx_ctx_vulkan_data_t *)opaque;
    VkInstanceCreateInfo info        = *create_info;
    VkInstance instance              = VK_NULL_HANDLE;
@@ -1042,8 +1090,13 @@ static VkInstance vulkan_context_create_instance_wrapper(void *opaque, const VkI
       goto end;
    }
 
-   memcpy((void*)instance_extensions, info.ppEnabledExtensionNames, info.enabledExtensionCount * sizeof(const char *));
-   memcpy((void*)instance_layers,     info.ppEnabledLayerNames,     info.enabledLayerCount     * sizeof(const char *));
+   /* A caller enabling no extensions or no layers legitimately
+    * passes NULL with a zero count; memcpy's second argument is
+    * declared non-NULL even for n == 0, so guard each copy. */
+   if (info.enabledExtensionCount)
+      memcpy((void*)instance_extensions, info.ppEnabledExtensionNames, info.enabledExtensionCount * sizeof(const char *));
+   if (info.enabledLayerCount)
+      memcpy((void*)instance_layers,     info.ppEnabledLayerNames,     info.enabledLayerCount     * sizeof(const char *));
    info.ppEnabledExtensionNames     = instance_extensions;
    info.ppEnabledLayerNames         = instance_layers;
 
@@ -1085,9 +1138,6 @@ static VkInstance vulkan_context_create_instance_wrapper(void *opaque, const VkI
    instance_layers[info.enabledLayerCount++]         = "VK_LAYER_KHRONOS_validation";
    required_extensions[required_extension_count++] = "VK_EXT_debug_utils";
 #endif
-
-   layer_count = ARRAY_SIZE(properties);
-   vkEnumerateInstanceLayerProperties(&layer_count, properties);
 
    if (!(vulkan_find_instance_extensions(
             instance_extensions, &info.enabledExtensionCount,
@@ -1435,6 +1485,23 @@ static void vulkan_destroy_swapchain(gfx_ctx_vulkan_data_t *vk)
    vk->context.num_recycled_acquire_semaphores = 0;
 }
 
+bool vulkan_surface_destroy(gfx_ctx_vulkan_data_t *vk)
+{
+   if (!vk || !vk->context.instance)
+      return false;
+
+   vulkan_destroy_swapchain(vk);
+
+   if (vk->vk_surface != VK_NULL_HANDLE)
+   {
+      vkDestroySurfaceKHR(vk->context.instance,
+            vk->vk_surface, NULL);
+      vk->vk_surface = VK_NULL_HANDLE;
+   }
+
+   return true;
+}
+
 static void vulkan_acquire_clear_fences(gfx_ctx_vulkan_data_t *vk)
 {
    unsigned i;
@@ -1728,16 +1795,48 @@ bool vulkan_surface_create(gfx_ctx_vulkan_data_t *vk,
          return false;
    }
 
-   /* Must create device after surface since we need to be able to query queues to use for presentation. */
-   if (!vulkan_context_init_device(vk))
-      return false;
+   /* Must create device after surface since we need to be able to query queues
+    * to use for presentation. When replacing a lost surface, retain the
+    * existing device and verify that its queue can present to the new one. */
+   if (vk->context.device == VK_NULL_HANDLE)
+   {
+      if (!vulkan_context_init_device(vk))
+         goto error_surface;
+   }
+   else
+   {
+      VkResult res;
+      VkBool32 supported = VK_FALSE;
+
+      res = vkGetPhysicalDeviceSurfaceSupportKHR(
+            vk->context.gpu,
+            vk->context.graphics_queue_index,
+            vk->vk_surface, &supported);
+      if (res != VK_SUCCESS || !supported)
+      {
+         RARCH_ERR("[Vulkan] Existing queue cannot present to replacement surface (err = %d).\n",
+               (int)res);
+         goto error_surface;
+      }
+   }
 
    if (!vulkan_create_swapchain(
             vk, width, height, swap_interval))
-      return false;
+      goto error_swapchain;
 
    vulkan_acquire_next_image(vk);
    return true;
+
+error_swapchain:
+   vulkan_destroy_swapchain(vk);
+error_surface:
+   if (vk->vk_surface != VK_NULL_HANDLE)
+   {
+      vkDestroySurfaceKHR(vk->context.instance,
+            vk->vk_surface, NULL);
+      vk->vk_surface = VK_NULL_HANDLE;
+   }
+   return false;
 }
 
 uint32_t vulkan_find_memory_type(
@@ -2648,6 +2747,10 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
    /* Force driver to reset swapchain image handles. */
    vk->context.flags                 |=  VK_CTX_FLAG_INVALID_SWAPCHAIN;
    vk->context.flags                 &= ~VK_CTX_FLAG_HAS_ACQUIRED_SWAPCHAIN;
+   /* A replacement swapchain can have fewer images than its predecessor.
+    * Do not retain an image index from the old swapchain while waiting for
+    * the first acquire from the new one. */
+   vk->context.current_swapchain_index = 0;
    vulkan_create_wait_fences(vk);
 
    if (vk->flags & VK_DATA_FLAG_EMULATING_MAILBOX)
@@ -2670,9 +2773,20 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
     * Uses Rec.2020 primaries (matching the D3D path) and RetroArch's
     * configured output-luminance range. Touches no formats or pipelines, so
     * a wrong or ignored value at worst affects display tone mapping. */
+   /* MoltenVK before 1.3.0 over-releases the autoreleased CAEDRMetadata
+    * and NSData objects it creates inside MVKSwapchain::setHDRMetadataEXT()
+    * (upstream commits 3b77dea and 8caa1d5, first shipped in 1.3.0); the
+    * pending autoreleases then crash the main-thread pool drain shortly
+    * after the call.  MoltenVK encodes driverVersion as
+    * major * 10000 + minor * 100 + patch, so 1.3.0 is 10300.  Skipping
+    * the call on affected versions only omits the SMPTE-2086 mastering
+    * hint; the layer colour space and EDR flag are still derived from
+    * the swapchain colour space by MoltenVK itself. */
    if (     vk->set_hdr_metadata
          && (vk->context.flags & VK_CTX_FLAG_HDR_ENABLE)
-         && vulkan_is_hdr10_format(vk->context.swapchain_format))
+         && vulkan_is_hdr10_format(vk->context.swapchain_format)
+         && !(   vk->wsi_type == VULKAN_WSI_MVK_MACOS
+              && vk->context.gpu_properties.driverVersion < 10300))
    {
       VkHdrMetadataEXT meta;
       meta.sType                     = VK_STRUCTURE_TYPE_HDR_METADATA_EXT;
@@ -2969,6 +3083,23 @@ void vulkan_context_destroy(gfx_ctx_vulkan_data_t *vk,
       string_list_free(vk->gpu_list);
       vk->gpu_list = NULL;
    }
+
+#ifdef HAVE_THREADS
+   /* vulkan_context_init_device() creates a fresh queue_lock on
+    * every bring-up -- including the cached-context path, which
+    * restores the device and then falls through to slock_new() like
+    * any other init -- so the lock's lifetime ends here regardless
+    * of whether the device itself is being cached.  Everything that
+    * takes it (vulkan_present, the frame submission paths) is done
+    * by this point: vkDeviceWaitIdle() ran at the top of this
+    * function.  Freeing it here stops one slock leaking per driver
+    * reinit -- every resolution change and fullscreen toggle. */
+   if (vk->context.queue_lock)
+   {
+      slock_free(vk->context.queue_lock);
+      vk->context.queue_lock = NULL;
+   }
+#endif
 }
 
 void vulkan_present(gfx_ctx_vulkan_data_t *vk, unsigned index)

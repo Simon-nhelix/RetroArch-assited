@@ -14,6 +14,7 @@
 
 static const struct
 {
+   char s_74d0bdad[32];
    char s_54d907f5[9];
    char s_9a250c33[28];
    char s_dec692c9[32];
@@ -38,6 +39,8 @@ static const struct
    char s_76fae911[46];
    char s_56581215[44];
    char s_6b45243b[20];
+   char s_43585d45[26];
+   char s_43585d53[23];
    char s_ea6df2a1[116];
    char s_bfb33e98[99];
    char s_87603f77[19];
@@ -271,7 +274,10 @@ static const struct
    char s_f7e668f4[11];
    char s_f4740f16[32];
    char s_d95f1db1[34];
+   char s_3c9950ad[38];
    char s_aafc147d[15];
+   char s_734f5242[46];
+   char s_55404857[15];
    char s_792e0069[23];
    char s_a9d2227f[23];
    char s_76e73138[20];
@@ -320,7 +326,10 @@ static const struct
 #endif
 #ifdef _3DS
    char s_22a46583[43];
+   char s_a4d079f8[19];
+   char s_3f3d3a01[20];
    char s_6651ce29[26];
+   char s_04fed26b[23];
    char s_17813ad9[14];
    char s_1131883a[17];
 #endif
@@ -1085,6 +1094,9 @@ static const struct
    char s_68d27147[13];
    char s_f02f73fc[50];
    char s_3a0a3fef[24];
+   char s_1b6ed818[19];
+   char s_89a75c21[20];
+   char s_9439ec8b[23];
    char s_1e09db79[10];
    char s_0d2d8eef[7];
    char s_400523e5[22];
@@ -1131,6 +1143,7 @@ static const struct
 #endif
    char s_d02afc79[32];
    char s_7a2033d4[20];
+   char s_a6e5d0ee[23];
    char s_f228c6c5[16];
    char s_645ae416[25];
    char s_df92f5b5[41];
@@ -1151,6 +1164,7 @@ static const struct
    char s_d3213ff3[34];
    char s_ac60056b[18];
    char s_1ad09b45[22];
+   char s_774e2332[27];
    char s_87064238[36];
    char s_2a273dd7[12];
    char s_5e5fc0ee[30];
@@ -1160,6 +1174,7 @@ static const struct
    char s_1193e37b[39];
    char s_729a38da[36];
    char s_4ca32b24[15];
+   char s_b51fb85c[28];
    char s_9b2a97d9[18];
    char s_94ce603f[44];
    char s_0c1e1a65[42];
@@ -1983,6 +1998,7 @@ static const struct
    char s_519cd5f8[31];
    char s_43ac80a0[16];
    char s_6959ce80[18];
+   char s_886631ec[21];
    char s_ebe994b4[23];
    char s_1c62c301[8];
    char s_a8bb35b6[9];
@@ -2230,6 +2246,7 @@ static const struct
    char s_48431da6[14];
    char s_bb346e8d[9];
    char s_d2fe3ed2[25];
+   char s_1edf58ee[31];
    char s_45816e1d[31];
    char s_730df420[16];
    char s_bcddf275[8];
@@ -2270,6 +2287,7 @@ static const struct
    char s_e0609921[14];
    char s_b3c7fa93[17];
    char s_f6a0db44[17];
+   char s_4eecff92[35];
    char s_0ca1128d[22];
    char s_65e6ea7c[8];
    char s_232d9d6e[8];
@@ -2321,6 +2339,7 @@ static const struct
    char s_aa0659db[25];
    char s_49757b91[25];
    char s_660eb9c4[25];
+   char s_b6ca9df2[31];
 #if defined(RARCH_MOBILE)
    char s_b754294b[74];
    char s_b754294c[74];
@@ -2370,6 +2389,8 @@ static const struct
    char s_042502c4[61];
    char s_90ae9a9f[71];
    char s_c9235dab[55];
+   char s_330be970_0[500];
+   char s_330be970_1[31];
    char s_98b02857[202];
    char s_6c3c586d[189];
    char s_950e7a66[30];
@@ -2901,6 +2922,7 @@ static const struct
    char s_6435c857[54];
 #endif
 #endif
+   char s_acca011c[107];
    char s_01efec73[45];
    char s_d3fc9970[52];
    char s_740bd7c4[54];
@@ -2916,7 +2938,9 @@ static const struct
    char s_aebcb136[138];
    char s_8b636a26[42];
    char s_8f707459[37];
+   char s_5aa622cc[190];
    char s_2b908073[264];
+   char s_64bea160[176];
    char s_97c62766[166];
    char s_6f458a85[114];
    char s_41702fdc[62];
@@ -2924,6 +2948,7 @@ static const struct
    char s_0a583569[83];
    char s_5b821b48[60];
    char s_5c6a50d2[114];
+   char s_c4d0ac0a[49];
    char s_84127a47[67];
    char s_a47f53ed[126];
    char s_cbdab193[312];
@@ -2932,7 +2957,12 @@ static const struct
    char s_70e21550[61];
    char s_f3e3ccc1[47];
    char s_0ca85937[49];
+   char s_23709d35[68];
+   char s_48b0d8fa[53];
    char s_9ce2f939[87];
+   char s_20f7870f[65];
+   char s_ed2240de[55];
+   char s_51e884d7[84];
 #ifdef HAVE_MICROPHONE
 #if !defined(RARCH_CONSOLE)
    char s_b40b91b9[113];
@@ -3475,6 +3505,7 @@ static const struct
    char s_3c679f0a[321];
    char s_5b059407[143];
    char s_36033606[177];
+   char s_d62ed5dc[379];
    char s_2e69508b[409];
    char s_7e96b5ce[57];
    char s_3547866d[140];
@@ -3512,6 +3543,7 @@ static const struct
    char s_6ac06624[145];
    char s_f765b650[50];
    char s_7059a595[47];
+   char s_6d1448c0[51];
    char s_cf0b487b[103];
    char s_840f4569[42];
    char s_c4928773[68];
@@ -4070,6 +4102,7 @@ static const struct
    char s_2dbb6496[23];
 } msg_hash_gl_blob =
 {
+   "Infraestrutura do servizo de IA",
    "Emulador",
    "1 bit, valor m\303\241ximo = 0x01",
    "16 Bits, valor m\303\241ximo = 0xFFFF",
@@ -4094,6 +4127,8 @@ static const struct
    "Executa o seguinte truco se o valor < Memoria",
    "Executar seguinte Cheat If Value != Memoria",
    "Establecer en Valor",
+   "Relleno horizontal manual",
+   "Recheo vertical manual",
    "O servidor de RetroAchievements non \303\251 accesible. Tentarase de novo ata que te\303\261a "
    "\303\251xito ou se peche a aplicaci\303\263n.",
    "Todas as solicitudes pendentes foron sincronizadas correctamente co servidor de RetroAchievement"
@@ -4561,7 +4596,10 @@ static const struct
    "Mesturador",
    "Acalar o son ao avanzar r\303\241pido",
    "Acelerar o son ao avanzar r\303\241pido",
+   "Remostrar a enteiro fixo (Suxesti\303\263n)",
    "Filtros de son",
+   "Negociaci\303\263n do formato de audio (Suxesti\303\263n)",
+   "Punto flotante",
    "Latencia de audio (ms)",
    "Sesgo de tempo m\303\241ximo",
    "Acalar o mesturador",
@@ -4610,7 +4648,10 @@ static const struct
 #endif
 #ifdef _3DS
    "Directorio de activos da pantalla inferior",
+   "Cor da fonte: Azul",
+   "Cor da fonte: Verde",
    "Opacidade da cor da fonte",
+   "Cor da fonte: Vermello",
    "Activar fonte",
    "Escala de fontes",
 #endif
@@ -5376,6 +5417,9 @@ static const struct
    "Modo Quiosco",
    "Velocidade de fotogramas do men\303\272 de aceleraci\303\263n",
    "Explorador de ficheiros",
+   "Cor da fonte: Azul",
+   "Cor da fonte: Verde",
+   "Cor da fonte: Vermello",
    "Opacidade",
    "Brillo",
    "Animaci\303\263n horizontal",
@@ -5422,6 +5466,7 @@ static const struct
 #endif
    "Mostrar \"Descargador principal\"",
    "Mostrar \"Dump Disc\"",
+   "Amosar rutas completas",
    "Mostrar \"Axuda\"",
    "Mostrar \"Cargar contido\"",
    "Notificaci\303\263n de inicio \"Cargar contido\"",
@@ -5442,6 +5487,7 @@ static const struct
    "Activa os sons de \"Desprazamento\"",
    "P\303\241xina de inicio",
    "Fondos das miniaturas",
+   "Son en miniaturas animadas",
    "Limiar de ampliaci\303\263n de miniaturas",
    "Texto suave",
    "Velocidade do texto do ticker",
@@ -5451,6 +5497,7 @@ static const struct
    "Usa o tema de cor do sistema preferido",
    "Visibilidade dos elementos do men\303\272",
    "Imaxe de fondo",
+   "Opacidade da imaxe de fondo",
    "Widgets gr\303\241ficos",
    "Escala os widgets gr\303\241ficos automaticamente",
    "Anulaci\303\263n de escala de widgets gr\303\241ficos",
@@ -6285,6 +6332,7 @@ static const struct
    "Sistema operativo da interface",
    "Versi\303\263n de Git",
    "Versi\303\263n de Lakka",
+   "Versi\303\263n de MoltenVK",
    "Fonte de alimentaci\303\263n",
    "Cargada",
    "Cargando",
@@ -6534,6 +6582,7 @@ static const struct
    "Personalizado",
    "Expulsar",
    "Calidade de transmisi\303\263n",
+   "Profundidade de bits de sa\303\255da",
    "Intervalo de intercambio VSync",
    "Sincronizaci\303\263n",
    "V\303\255deos",
@@ -6574,6 +6623,7 @@ static const struct
    "Activa a wifi",
    "Conectar \303\241 rede",
    "Conectar \303\241 rede",
+   "Factor de opacidade do tema de cor",
    "Icona actual do men\303\272",
    "Ning\303\272n",
    "T\303\255tulo",
@@ -6625,6 +6675,7 @@ static const struct
    "Predefinido de sombreado",
    "Predefinido de sombreado",
    "Predefinido de sombreado",
+   "Profundidade de bits de sa\303\255da",
 #if defined(RARCH_MOBILE)
    "Desprazamento da ancoraxe da Xanela Gr\303\241fica en X (orientaci\303\263n vertical)",
    "Desprazamento da ancoraxe da Xanela Gr\303\241fica en Y (orientaci\303\263n vertical)",
@@ -6690,6 +6741,14 @@ static const struct
    "Acalar automaticamente o audio ao utilizar o avance r\303\241pido.",
    "Acelera o audio ao avanzar r\303\241pido. Evita crepitar pero cambia de ton.",
    "Os filtros DSP de audio almac\303\251nanse neste directorio.",
+   "Formato de mostra que o controlador de audio solicita ao dispositivo de sa\303\255da. \342\200"
+   "\230Float\342\200\231 solicita punto flotante de 32 bits, \342\200\230Int16\342\200\231 solicita"
+   " enteiro de 16 bits. S\303\263 afecta aos controladores que poden negociar o formato (WASAPI, Di"
+   "rectSound, XAudio2, ALSA, SDL2); os demais usan o seu formato fixo. \303\211 s\303\263 unha suxe"
+   "sti\303\263n: o controlador empregar\303\241 outro formato se o dispositivo rexeita o solicitado"
+   ". \342\200\230Int16\342\200\231 comb\303\255nase coa suxesti\303\263n \342\200\230Reamostrar a e"
+   "nteiro fixo\342\200\231 para manter toda a rut",
+   "a de audio no dominio enteiro.",
    "Latencia m\303\241xima de audio en milisegundos. O controlador intenta manter a latencia real ao"
    " 50% deste valor. Pode que non se respecte se o controlador de audio non pode proporcionar a lat"
    "encia indicada.",
@@ -7482,6 +7541,8 @@ static const struct
    "Mostra a opci\303\263n \"Expulsar disco\" no men\303\272 principal.",
 #endif
 #endif
+   "Amosa as rutas completas na configuraci\303\263n de directorios, en lugar de s\303\263 o nome do"
+   " directorio escollido.",
    "Mostra a opci\303\263n \"Axuda\" no men\303\272 principal.",
    "Mostra a opci\303\263n \"Informaci\303\263n\" no men\303\272 principal.",
    "Mostra a opci\303\263n \"Cargar contido\" no men\303\272 principal.",
@@ -7498,10 +7559,16 @@ static const struct
    "eta e ACEPTAR a vez para acceder ao men\303\272 'Executar'.",
    "Cambiar a configuraci\303\263n de son do men\303\272.",
    "P\303\241xina de men\303\272 inicial ao iniciar.",
+   "Xera mipmaps para as imaxes do men\303\272. Mant\303\251n iconas, miniaturas e fondos suaves can"
+   "do se amosan por debaixo do seu tama\303\261o nativo, a cambio dun lixeiro aumento no uso de mem"
+   "oria de v\303\255deo.",
    "Permite o recheo de espazo non utilizado nas imaxes en miniatura cun fondo s\303\263lido. Isto g"
    "arante un tama\303\261o de visualizaci\303\263n uniforme para todas as imaxes, mellorando o aspe"
    "cto do men\303\272 cando se ven miniaturas de contido mixto con diferentes dimensi\303\263ns de "
    "base.",
+   "Reproduce a pista de son das miniaturas animadas en WebM mentres se amosan. Adm\303\255tense son"
+   "s Vorbis e Opus. O son rep\303\255tese coa animaci\303\263n e detense cando se pecha a miniatura"
+   ".",
    "Aumenta automaticamente as imaxes en miniatura cunha anchura/alto menor que o valor especificado"
    ". Mellora a calidade da imaxe. Ten un impacto moderado no rendemento.",
    "Use unha animaci\303\263n de desprazamento suave ao mostrar texto de men\303\272 longo. Ten un p"
@@ -7513,6 +7580,7 @@ static const struct
    "Alterna a visibilidade dos elementos do men\303\272 en RetroArch.",
    "Seleccione unha imaxe para definir como fondo do men\303\272. As imaxes manuais e din\303\241mic"
    "as anular\303\241n o \"Tema de cor\".",
+   "Modifica o nivel de opacidade da imaxe de fondo.",
    "Usa animaci\303\263ns decoradas, notificaci\303\263ns, indicadores e controis.",
    "Redimensiona automaticamente as notificaci\303\263ns, os indicadores e os controis decorados en "
    "funci\303\263n da escala do men\303\272 actual.",
@@ -7533,8 +7601,13 @@ static const struct
    "A animaci\303\263n que se activa ao desprazarse entre as pestanas.",
    "A animaci\303\263n que se activa ao subir ou baixar.",
    "A animaci\303\263n que se activa ao abrir un submen\303\272.",
+   "Activa a lista principal de lapelas horizontais para a navegaci\303\263n.",
+   "Mostra a localizaci\303\263n actual do men\303\272 na cabeceira.",
    "Reduce o tama\303\261o da visualizaci\303\263n das miniaturas escalando o ancho m\303\241ximo pe"
    "rmitido.",
+   "Axusta a distancia da cabeceira do t\303\255tulo ao bordo da pantalla.",
+   "Axusta a distancia horizontal da cabeceira do t\303\255tulo.",
+   "Axusta o nivel de esvaecemento dos elementos visibles preto dos bordos da pantalla.",
 #ifdef HAVE_MICROPHONE
 #if !defined(RARCH_CONSOLE)
    "Anular o dispositivo de entrada predeterminado que usa o controlador do micr\303\263fono. Isto d"
@@ -8371,6 +8444,11 @@ static const struct
    "Engade un lixeiro borroso \303\241 imaxe para suavizar os bordos dos p\303\255xeles duros. Esta "
    "opci\303\263n ten moi pouco impacto no rendemento. Debe estar desactivado se se usan sombreadore"
    "s.",
+   "Profundidade de bits da superficie de sa\303\255da final cando o HDR est\303\241 desactivado. Os"
+   " 10 bits eliminan as bandas introducidas por sombreadores que escurecen moito a imaxe, como os p"
+   "erf\303\255s de feixe CRT e as m\303\241scaras de grella de apertura. Volve a 8 bits se a pantal"
+   "la ou o compositor non o permiten. Ign\303\263rase mentres o HDR est\303\241 activado, xa que se"
+   "lecciona o seu propio formato.",
    "Use un intervalo de intercambio personalizado para VSync. Reduce efectivamente a frecuencia de a"
    "ctualizaci\303\263n do monitor polo factor especificado. \"Autom\303\241tico\" define o factor e"
    "n funci\303\263n da frecuencia de fotogramas informada polo n\303\272cleo, proporcionando un rit"
@@ -8438,6 +8516,7 @@ static const struct
    "ualizaci\303\263n variable (G-Sync, FreeSync, HDMI 2.1 VRR).",
    "Controlador de Wi-Fi a usar. (Reinicio necesario)",
    "Busca redes sen f\303\255os e establece a conexi\303\263n.",
+   "Modifica a porcentaxe de opacidade do tema de cor.",
    "A icona actual do men\303\272 pode ocultarse, mostrarse baixo o men\303\272 horizontal ou no t"
    "\303\255tulo da cabeceira.",
    "Debuxar iconas para as entradas do men\303\272.",
@@ -9040,7 +9119,7 @@ static const struct
  * compiler that pads this struct fails here instead of
  * misindexing at runtime. */
 typedef char msg_hash_gl_blob_check[
-      (sizeof(msg_hash_gl_blob) == (192006u
+      (sizeof(msg_hash_gl_blob) == (194252u
 #ifdef ANDROID
        + 365u
 #endif
@@ -9060,7 +9139,10 @@ typedef char msg_hash_gl_blob_check[
 #endif
 #ifdef _3DS
        + 43u
+       + 19u
+       + 20u
        + 26u
+       + 23u
        + 14u
        + 17u
 #endif
@@ -9444,6 +9526,7 @@ typedef char msg_hash_gl_blob_check[
 
 static const uint32_t msg_hash_gl_ids[] =
 {
+   (uint32_t)MENU_ENUM_LABEL_AI_SERVICE_BACKEND,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_HANDLER_TYPE_EMU,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_1,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_MEMORY_SIZE_16,
@@ -9468,6 +9551,8 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_RUN_NEXT_IF_LT,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_RUN_NEXT_IF_NEQ,
    (uint32_t)MENU_ENUM_LABEL_CHEAT_TYPE_SET_TO_VALUE,
+   (uint32_t)MENU_ENUM_LABEL_CHEEVOS_APPEARANCE_PADDING_H,
+   (uint32_t)MENU_ENUM_LABEL_CHEEVOS_APPEARANCE_PADDING_V,
    (uint32_t)MENU_ENUM_LABEL_CHEEVOS_SERVER_DISCONNECTED,
    (uint32_t)MENU_ENUM_LABEL_CHEEVOS_SERVER_RECONNECTED,
    (uint32_t)MENU_ENUM_LABEL_EXPLORE_DELETE_VIEW,
@@ -9696,7 +9781,10 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_ENABLE_MENU,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FASTFORWARD_MUTE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FASTFORWARD_SPEEDUP,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FASTPATH_S16,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FILTER_DIR,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FORMAT_NEGOTIATION,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_FORMAT_NEGOTIATION_FLOAT,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_LATENCY,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_MAX_TIMING_SKEW,
    (uint32_t)MENU_ENUM_LABEL_VALUE_AUDIO_MIXER_MUTE,
@@ -9745,7 +9833,10 @@ static const uint32_t msg_hash_gl_ids[] =
 #endif
 #ifdef _3DS
    (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_ASSETS_DIRECTORY,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_BLUE,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_GREEN,
    (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_OPACITY,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_COLOR_RED,
    (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_ENABLE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_BOTTOM_FONT_SCALE,
 #endif
@@ -10510,6 +10601,9 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_ENABLE_KIOSK_MODE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_ENUM_THROTTLE_FRAMERATE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FILE_BROWSER_SETTINGS,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FONT_COLOR_BLUE,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FONT_COLOR_GREEN,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FONT_COLOR_RED,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_FRAMEBUFFER_OPACITY,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_HDR_BRIGHTNESS_NITS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_HORIZONTAL_ANIMATION,
@@ -10556,6 +10650,7 @@ static const uint32_t msg_hash_gl_ids[] =
 #endif
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_CORE_UPDATER,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_DUMP_DISC,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_FULL_PATHS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_HELP,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_LOAD_CONTENT,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SHOW_LOAD_CONTENT_ANIMATION,
@@ -10576,6 +10671,7 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_SOUND_SCROLL,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_STARTUP_PAGE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_THUMBNAIL_BACKGROUND_ENABLE,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_THUMBNAIL_PREVIEW_AUDIO,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_THUMBNAIL_UPSCALE_THRESHOLD,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_TICKER_SMOOTH,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_TICKER_SPEED,
@@ -10585,6 +10681,7 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_USE_PREFERRED_SYSTEM_COLOR_THEME,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_VIEWS_SETTINGS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WALLPAPER,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WALLPAPER_OPACITY,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGETS_ENABLE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_AUTO,
    (uint32_t)MENU_ENUM_LABEL_VALUE_MENU_WIDGET_SCALE_FACTOR,
@@ -11407,6 +11504,7 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_FRONTEND_OS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_GIT_VERSION,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_LAKKA_VERSION,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_MOLTENVK_VERSION,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE_CHARGED,
    (uint32_t)MENU_ENUM_LABEL_VALUE_SYSTEM_INFO_POWER_SOURCE_CHARGING,
@@ -11654,6 +11752,7 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_STREAMING_MODE_CUSTOM,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_STREAMING_MODE_KICK,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_STREAM_QUALITY,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SWAPCHAIN_BIT_DEPTH,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SWAP_INTERVAL,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_SYNCHRONIZATION_SETTINGS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_VIDEO_TAB,
@@ -11694,6 +11793,7 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VALUE_WIFI_ENABLED,
    (uint32_t)MENU_ENUM_LABEL_VALUE_WIFI_NETWORKS,
    (uint32_t)MENU_ENUM_LABEL_VALUE_WIFI_NETWORK_SCAN,
+   (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_ALPHA_FACTOR,
    (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_CURRENT_MENU_ICON,
    (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_CURRENT_MENU_ICON_NONE,
    (uint32_t)MENU_ENUM_LABEL_VALUE_XMB_CURRENT_MENU_ICON_TITLE,
@@ -11745,6 +11845,7 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_APPEND_TWO,
    (uint32_t)MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_PREPEND_TWO,
    (uint32_t)MENU_ENUM_LABEL_VIDEO_SHADER_PRESET_TWO,
+   (uint32_t)MENU_ENUM_LABEL_VIDEO_SWAPCHAIN_BIT_DEPTH,
 #if defined(RARCH_MOBILE)
    (uint32_t)MENU_ENUM_LABEL_VIDEO_VIEWPORT_BIAS_PORTRAIT_X,
    (uint32_t)MENU_ENUM_LABEL_VIDEO_VIEWPORT_BIAS_PORTRAIT_Y,
@@ -11794,6 +11895,7 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FASTFORWARD_MUTE,
    (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FASTFORWARD_SPEEDUP,
    (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FILTER_DIR,
+   (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_FORMAT_NEGOTIATION,
    (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_LATENCY,
    (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_MAX_TIMING_SKEW,
    (uint32_t)MENU_ENUM_SUBLABEL_AUDIO_MIXER_MUTE,
@@ -12325,6 +12427,7 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_EJECT_DISC,
 #endif
 #endif
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_FULL_PATHS,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_HELP,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_INFORMATION,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SHOW_LOAD_CONTENT,
@@ -12340,7 +12443,9 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SINGLECLICK_PLAYLISTS,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_SOUNDS,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_STARTUP_PAGE,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_TEXTURE_MIPMAPPING,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_THUMBNAIL_BACKGROUND_ENABLE,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_THUMBNAIL_PREVIEW_AUDIO,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_THUMBNAIL_UPSCALE_THRESHOLD,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_TICKER_SMOOTH,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_TICKER_SPEED,
@@ -12348,6 +12453,7 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_USE_PREFERRED_SYSTEM_COLOR_THEME,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_VIEWS_SETTINGS,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_WALLPAPER,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_WALLPAPER_OPACITY,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_WIDGETS_ENABLE,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_WIDGET_SCALE_AUTO,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_WIDGET_SCALE_FACTOR,
@@ -12356,7 +12462,12 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_ANIMATION_HORIZONTAL_HIGHLIGHT,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_ANIMATION_MOVE_UP_DOWN,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_ANIMATION_OPENING_MAIN_MENU,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_SHOW_HORIZONTAL_LIST,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_SHOW_TITLE_HEADER,
    (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_THUMBNAIL_SCALE_FACTOR,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_TITLE_MARGIN,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_TITLE_MARGIN_HORIZONTAL_OFFSET,
+   (uint32_t)MENU_ENUM_SUBLABEL_MENU_XMB_VERTICAL_FADE_FACTOR,
 #ifdef HAVE_MICROPHONE
 #if !defined(RARCH_CONSOLE)
    (uint32_t)MENU_ENUM_SUBLABEL_MICROPHONE_DEVICE,
@@ -12899,6 +13010,7 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHADER_SUBFRAMES,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SHARED_CONTEXT,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SMOOTH,
+   (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SWAPCHAIN_BIT_DEPTH,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SWAP_INTERVAL,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_SYNCHRONIZATION_SETTINGS,
    (uint32_t)MENU_ENUM_SUBLABEL_VIDEO_THREADED,
@@ -12936,6 +13048,7 @@ static const uint32_t msg_hash_gl_ids[] =
    (uint32_t)MENU_ENUM_SUBLABEL_VRR_RUNLOOP_ENABLE,
    (uint32_t)MENU_ENUM_SUBLABEL_WIFI_DRIVER,
    (uint32_t)MENU_ENUM_SUBLABEL_WIFI_SETTINGS,
+   (uint32_t)MENU_ENUM_SUBLABEL_XMB_ALPHA_FACTOR,
    (uint32_t)MENU_ENUM_SUBLABEL_XMB_CURRENT_MENU_ICON,
    (uint32_t)MENU_ENUM_SUBLABEL_XMB_ENTRY_ICONS,
    (uint32_t)MENU_ENUM_SUBLABEL_XMB_FONT,
