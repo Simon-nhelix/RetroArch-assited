@@ -303,3 +303,6 @@ gfx/common/metal/Shaders.air
 
 # Python
 __pycache__/
+
+# Local Superpowers design/plan docs — not part of the fork
+docs/superpowers/

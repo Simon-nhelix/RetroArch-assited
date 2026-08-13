@@ -25,6 +25,15 @@ S_BOOL(ai_service_pause, AI_SERVICE_PAUSE,
 /* Descriptor and configuration rows are #ifdef HAVE_TRANSLATE; the string
  * tables always carry this row via the strings pass. */
 #if defined(HAVE_TRANSLATE) || defined(SETTINGS_DEF_STRINGS_PASS)
+S_UINT_EX(ai_service_timeout, AI_SERVICE_TIMEOUT,
+      "ai_service_timeout",
+      DEFAULT_AI_SERVICE_TIMEOUT, SD_FLAG_NONE, SDESC_RANGE_MINMAX, 0, 0, 300, 1, 0, setting_action_ok_uint, NULL, NULL, NULL, NULL, NULL, 0,
+      "Translation Request Timeout",
+      "Seconds to wait for a translation HTTP response before cancelling and retrying. 0 disables the timeout.")
+#endif
+/* Descriptor and configuration rows are #ifdef HAVE_TRANSLATE; the string
+ * tables always carry this row via the strings pass. */
+#if defined(HAVE_TRANSLATE) || defined(SETTINGS_DEF_STRINGS_PASS)
 S_UINT_EX(ai_service_source_lang, AI_SERVICE_SOURCE_LANG,
       "ai_service_source_lang",
       DEFAULT_AI_SERVICE_SOURCE_LANG, SD_FLAG_NONE, SDESC_RANGE_MINMAX, 0, TRANSLATION_LANG_DONT_CARE, (TRANSLATION_LANG_LAST-1), 1, 0, setting_action_ok_uint, setting_get_string_representation_uint_ai_service_lang, NULL, NULL, NULL, NULL, 0,
