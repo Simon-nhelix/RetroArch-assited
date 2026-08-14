@@ -95,3 +95,7 @@ without launching RetroArch.
   (`input/input_types.h`); leftover 2026-07-22 objects then read the bind
   array at the old stride, so keyboard Up was seen as SELECT and opened
   the in-menu Help/Info box. Header `.d` files did not catch this.
+- `make bundle` defaults to ad-hoc signing (`codesign --sign -`). That
+  changes the CDHash every build, so macOS asks for mic/camera/network
+  again. Put a stable keychain identity in gitignored `Makefile.local`:
+  `CODESIGN_IDENTITY = Your Identity Name`.
