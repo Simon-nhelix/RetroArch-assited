@@ -78,6 +78,9 @@ without launching RetroArch.
 
 ## Build notes (macOS)
 
+- Daily-use binary is `local-builds/RetroArch.app`, not `./retroarch` and
+  not `/Applications/RetroArch.app`. After `make`, run `make bundle` and
+  `ditto RetroArch.app local-builds/RetroArch.app`.
 - Requires the Metal toolchain (`xcodebuild -downloadComponent MetalToolchain`).
   Building without Metal silently falls back to OpenGL and the screen
   flickers constantly.
@@ -86,3 +89,9 @@ without launching RetroArch.
 - `make bundle` copies `media/retroarch.icns` into the bundle and declares
   `CFBundleIconFile`, so commandline bundles get the app icon automatically
   (commit `50c713f933`).
+- After merging `upstream/master`, run `make clean` before `make` /
+  `make bundle`. Incremental rebuilds can keep pre-merge `.o` files. The
+  2026-08-07 merge shrank `struct retro_keybind` from 48 to 28 bytes
+  (`input/input_types.h`); leftover 2026-07-22 objects then read the bind
+  array at the old stride, so keyboard Up was seen as SELECT and opened
+  the in-menu Help/Info box. Header `.d` files did not catch this.
