@@ -61,6 +61,7 @@
 #endif
 
 #include "tasks_internal.h"
+#include "ai_service_reliability.h"
 
 #ifdef HAVE_TRANSLATE_APPLE
 #include "../ui/drivers/cocoa/translation_driver_apple.h"
@@ -296,34 +297,94 @@ static unsigned ai_service_error_streak;
 static retro_time_t ai_service_last_error_notify;
 
 #define AI_SERVICE_ERROR_NOTIFY_USEC (5 * 1000 * 1000)
-#define AI_SERVICE_RETRY_MAX_USEC    (10 * 1000 * 1000)
 
-static bool ai_service_error_is_transient(const char *error)
+static retro_time_t ai_service_retry_delay_usec_now(void)
 {
-   if (!error || !*error)
-      return false;
-   if (string_is_equal(error, "No text found."))
-      return false;
-   if (   strstr(error, "Select a model")
-       || strstr(error, "AI Service URL")
-       || strstr(error, "requires macOS")
-       || strstr(error, "Apple Vision OCR requires"))
-      return false;
-   return true;
+   return (retro_time_t)ai_service_retry_delay_usec(ai_service_error_streak);
 }
 
-static retro_time_t ai_service_retry_delay_usec(void)
+static retro_task_t *ai_service_inflight_http;
+static bool ai_service_timeout_fired;
+
+typedef struct
 {
-   /* 1s, 2s, 4s, 8s, then capped while failures continue. */
-   unsigned shift = ai_service_error_streak > 0
-         ? ai_service_error_streak - 1 : 0;
-   retro_time_t delay;
-   if (shift > 3)
-      shift = 3;
-   delay = (retro_time_t)1000000 << shift;
-   if (delay > AI_SERVICE_RETRY_MAX_USEC)
-      delay = AI_SERVICE_RETRY_MAX_USEC;
-   return delay;
+   retro_task_t *http_task;
+} ai_service_timeout_ctx_t;
+
+static void ai_service_cancel_inflight_http(void)
+{
+   if (ai_service_inflight_http)
+   {
+      uint8_t http_flg = task_get_flags(ai_service_inflight_http);
+      if (!(http_flg & RETRO_TASK_FLG_FINISHED))
+         task_queue_cancel_task(ai_service_inflight_http);
+   }
+   ai_service_inflight_http  = NULL;
+   ai_service_timeout_fired  = false;
+}
+
+static bool ai_service_finish_inflight_http(retro_task_t *task)
+{
+   bool fired = false;
+   if (ai_service_inflight_http != task)
+      return false;
+   fired = ai_service_timeout_fired;
+   ai_service_timeout_fired = false;
+   ai_service_inflight_http = NULL;
+   return fired;
+}
+
+static void ai_service_timeout_handler(retro_task_t *task)
+{
+   ai_service_timeout_ctx_t *ctx =
+         (ai_service_timeout_ctx_t*)task->user_data;
+   uint8_t flg = task_get_flags(task);
+
+   if (   ctx
+       && !(flg & RETRO_TASK_FLG_CANCELLED)
+       && ctx->http_task
+       && ctx->http_task == ai_service_inflight_http)
+   {
+      uint8_t http_flg = task_get_flags(ai_service_inflight_http);
+      if (!(http_flg & RETRO_TASK_FLG_FINISHED))
+      {
+         ai_service_timeout_fired = true;
+         task_queue_cancel_task(ai_service_inflight_http);
+      }
+   }
+   task_set_flags(task, RETRO_TASK_FLG_FINISHED, true);
+   if (ctx)
+      free(ctx);
+   task->user_data = NULL;
+}
+
+static void ai_service_arm_http_timeout(void *http_task)
+{
+   settings_t *settings = config_get_ptr();
+   unsigned timeout_sec;
+   retro_task_t *t;
+   ai_service_timeout_ctx_t *ctx;
+
+   ai_service_inflight_http = (retro_task_t*)http_task;
+   ai_service_timeout_fired = false;
+
+   timeout_sec = settings ? settings->uints.ai_service_timeout : 30;
+   if (!http_task || timeout_sec == 0)
+      return;
+   if (!(t = task_init()))
+      return;
+   if (!(ctx = (ai_service_timeout_ctx_t*)malloc(sizeof(*ctx))))
+   {
+      free(t);
+      return;
+   }
+   ctx->http_task = (retro_task_t*)http_task;
+   t->user_data   = ctx;
+   t->handler     = ai_service_timeout_handler;
+   t->when        = cpu_features_get_time_usec()
+         + (retro_time_t)timeout_sec * 1000000;
+   t->flags      |= RETRO_TASK_FLG_MUTE;
+   task_queue_push(t);
 }
 
 typedef struct
@@ -991,7 +1052,7 @@ finish:
             auto_wait_mode = 2;
          if (   response->error
              && ai_service_error_is_transient(response->error))
-            retry_delay = ai_service_retry_delay_usec();
+            retry_delay = ai_service_retry_delay_usec_now();
          ai_service_call_auto_translate_task(access_st,
                auto_wait_mode,
                &was_paused, retry_delay);
@@ -1188,22 +1249,26 @@ bool run_translation_service(settings_t *settings, bool paused)
    uint8_t *bit24_image_prev         = NULL;
    struct scaler_ctx *scaler         = NULL;
    bool success                      = false;
+   const char *fail_reason           = NULL;
    char *sys_lbl                     = NULL;
    core_info_t *core_info            = NULL;
    video_driver_state_t *video_st    = video_state_get_ptr();
    access_state_t *access_st         = access_state_get_ptr();
 #ifdef HAVE_GFX_WIDGETS
-   /* For the case when ai service pause is disabled. */
+   /* Pause-disabled auto start may still have a leftover overlay.
+    * Unload it and continue capturing; aborting here left auto=1
+    * so the next hotkey was misread as Stop. */
    if (     (gfx_widgets_ai_service_overlay_get_state() != 0)
          && (access_st->ai_service_auto == 1))
-   {
       gfx_widgets_ai_service_overlay_unload();
-      goto finish;
-   }
 #endif
 
    if (!(scaler = (struct scaler_ctx*)calloc(1, sizeof(struct scaler_ctx))))
+   {
+      fail_reason = AI_SERVICE_CAPTURE_ERROR;
+      RARCH_LOG("[Translation] Could not allocate capture scaler.\n");
       goto finish;
+   }
 
    /* get the core info here so we can pass long the game name */
    core_info_get_current_core(&core_info);
@@ -1245,7 +1310,11 @@ bool run_translation_service(settings_t *settings, bool paused)
       bool has_cpu_pixels = false;
       if (!video_driver_cached_frame_info(&width, &height, &pitch,
                &has_cpu_pixels))
+      {
+         fail_reason = AI_SERVICE_CAPTURE_ERROR;
+         RARCH_LOG("[Translation] cached_frame_info failed.\n");
          goto finish;
+      }
 
       if (!has_cpu_pixels)
       {
@@ -1267,7 +1336,11 @@ bool run_translation_service(settings_t *settings, bool paused)
          video_driver_get_viewport_info(&vp);
 
          if (!vp.width || !vp.height)
+         {
+            fail_reason = AI_SERVICE_CAPTURE_ERROR;
+            RARCH_LOG("[Translation] Viewport has no size for capture.\n");
             goto finish;
+         }
 
          bit24_image_prev = (uint8_t*)malloc(
                (size_t)vp.width * vp.height * 3);
@@ -1275,12 +1348,17 @@ bool run_translation_service(settings_t *settings, bool paused)
                (size_t)width * height * 3);
 
          if (!bit24_image_prev || !bit24_image)
+         {
+            fail_reason = AI_SERVICE_CAPTURE_ERROR;
+            RARCH_LOG("[Translation] Could not allocate capture buffers.\n");
             goto finish;
+         }
 
          if (!(      video_st->current_video->read_viewport
                   && video_st->current_video->read_viewport(
                      video_st->data, bit24_image_prev, false)))
          {
+            fail_reason = AI_SERVICE_CAPTURE_ERROR;
             RARCH_LOG("[Translation] Could not read viewport for translation service.\n");
             goto finish;
          }
@@ -1317,7 +1395,11 @@ bool run_translation_service(settings_t *settings, bool paused)
 
          if (!(bit24_image = (uint8_t*)malloc(
                      (size_t)width * height * 3)))
+         {
+            fail_reason = AI_SERVICE_CAPTURE_ERROR;
+            RARCH_LOG("[Translation] Could not allocate SW capture buffer.\n");
             goto finish;
+         }
 
          if (video_driver_pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888)
             scaler->in_fmt = SCALER_FMT_ARGB8888;
@@ -1335,14 +1417,22 @@ bool run_translation_service(settings_t *settings, bool paused)
             video_driver_cached_frame_read(&ctx,
                   translation_sw_convert_cb);
             if (!ctx.converted)
+            {
+               fail_reason = AI_SERVICE_CAPTURE_ERROR;
+               RARCH_LOG("[Translation] SW frame conversion failed.\n");
                goto finish;
+            }
          }
       }
    }
    scaler_ctx_gen_reset(scaler);
 
    if (!bit24_image)
+   {
+      fail_reason = AI_SERVICE_CAPTURE_ERROR;
+      RARCH_LOG("[Translation] Capture produced no RGB frame.\n");
       goto finish;
+   }
 
    /* Dispatch to the appropriate backend */
    {
@@ -1385,6 +1475,21 @@ finish:
       free(scaler);
    if (sys_lbl)
       free(sys_lbl);
+   if (!success)
+   {
+      if (!fail_reason)
+         fail_reason = AI_SERVICE_CAPTURE_ERROR;
+      RARCH_LOG("[Translation] %s\n", fail_reason);
+      if (access_st->ai_service_auto != 0)
+      {
+         translation_response_t fail;
+         memset(&fail, 0, sizeof(fail));
+         fail.error          = (char*)fail_reason;
+         fail.auto_translate = ai_service_error_is_transient(fail_reason);
+         fail.show_text      = true;
+         handle_translation_response(&fail, NULL);
+      }
+   }
    return success;
 }
 
@@ -1425,6 +1530,7 @@ static void handle_translation_cb(
    bool service_active;
    bool request_current;
    bool config_current;
+   bool timed_out = ai_service_finish_inflight_http(task);
 
    /* Initialize response */
    memset(&response, 0, sizeof(response));
@@ -1463,8 +1569,15 @@ static void handle_translation_cb(
 
    if (!data || error || !data->data)
    {
-      if (error)
-         RARCH_ERR("[Translation] HTTP error: %s\n", error);
+      const char *fail = timed_out
+            ? AI_SERVICE_TIMEOUT_ERROR
+            : (error ? error : "Translation HTTP request returned no data.");
+      RARCH_ERR("[Translation] HTTP error: %s\n", fail);
+      response.error          = strdup(fail);
+      response.auto_translate = ai_service_error_is_transient(fail);
+      response.show_text      = true;
+      if (ctx && ctx->callback)
+         ctx->callback(&response, ctx->userdata);
       goto finish;
    }
 
@@ -1814,11 +1927,16 @@ static bool http_translate(
             ctx->config_fingerprint = config_fingerprint;
             strlcpy(ctx->backend, settings->arrays.ai_service_backend,
                   sizeof(ctx->backend));
-            if (task_push_http_post_transfer(new_ai_service_url,
-                     json_buffer, true, NULL, handle_translation_cb, ctx))
             {
-               ctx     = NULL; /* HTTP task owns it. */
-               success = true;
+               void *http_task = task_push_http_post_transfer(
+                     new_ai_service_url, json_buffer, true, NULL,
+                     handle_translation_cb, ctx);
+               if (http_task)
+               {
+                  ai_service_arm_http_timeout(http_task);
+                  ctx     = NULL; /* HTTP task owns it. */
+                  success = true;
+               }
             }
          }
       }
@@ -2018,6 +2136,7 @@ void ai_service_invalidate_translation(void)
    openai_last_config_fingerprint = 0;
    ai_service_error_streak        = 0;
    ai_service_last_error_notify   = 0;
+   ai_service_cancel_inflight_http();
 #ifdef HAVE_GFX_WIDGETS
    gfx_widget_clear_ai_service_message();
 #endif
@@ -2577,7 +2696,9 @@ static void openai_translation_cb(retro_task_t *task, void *task_data,
    bool service_active;
    bool request_current;
    bool config_current;
-   (void)task;
+   bool timed_out;
+
+   timed_out = ai_service_finish_inflight_http(task);
 
 #ifdef HAVE_TRANSLATE_APPLE
    if (ctx && string_is_equal(ctx->backend, "apple_ocr_openai"))
@@ -2627,7 +2748,9 @@ static void openai_translation_cb(retro_task_t *task, void *task_data,
    response.auto_translate = true;
    response.show_text       = true;
 
-   if (error)
+   if (timed_out)
+      response.error = strdup(AI_SERVICE_TIMEOUT_ERROR);
+   else if (error)
       response.error = strdup(error);
    else if (!data || !data->data)
       response.error = strdup("OpenAI-compatible endpoint returned no data.");
@@ -2980,6 +3103,7 @@ static bool openai_translate(
    if (!http_task)
       goto finish;
 
+   ai_service_arm_http_timeout(http_task);
    ctx     = NULL; /* HTTP task owns it. */
    success = true;
 
@@ -2997,8 +3121,12 @@ finish:
    if (scaled_image)
       free(scaled_image);
    if (!success)
+   {
+      const char *prep_error =
+            "Could not prepare or send the AI translation request.";
       return openai_emit_local_response(callback, userdata, NULL,
-            "Could not prepare or send the AI translation request.", false);
+            prep_error, ai_service_error_is_transient(prep_error));
+   }
    return success;
 }
 
@@ -3101,6 +3229,8 @@ static bool apple_ocr_openai_post_text(
          json_buffer, (size_t)json_len, "application/json",
          true, true, header_ptr, openai_translation_cb, &ctx->request);
    success = http_task != NULL;
+   if (http_task)
+      ai_service_arm_http_timeout(http_task);
 
 finish:
    if (writer)
@@ -3279,8 +3409,12 @@ static bool apple_ocr_openai_translate(
             "apple_ocr_openai");
 
    if (!(ctx = (apple_ocr_openai_ctx_t*)calloc(1, sizeof(*ctx))))
+   {
+      const char *prep_error =
+            "Could not prepare the Apple Vision OCR request.";
       return openai_emit_local_response(callback, userdata, NULL,
-            "Could not prepare the Apple Vision OCR request.", false);
+            prep_error, ai_service_error_is_transient(prep_error));
+   }
 
    ctx->request.callback = callback;
    ctx->request.userdata = userdata;

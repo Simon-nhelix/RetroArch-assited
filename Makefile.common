@@ -309,7 +309,8 @@ OBJ += \
        $(LIBRETRO_COMM_DIR)/encodings/encoding_base64.o
 
 ifeq ($(HAVE_TRANSLATE), 1)
-   OBJ += tasks/task_translation.o
+   OBJ += tasks/task_translation.o \
+          tasks/ai_service_reliability.o
 endif
 
 OBJ += \

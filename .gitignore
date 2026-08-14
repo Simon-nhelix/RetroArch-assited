@@ -300,3 +300,12 @@ pkg/psl1ght/pkg/USRDIR/shaders_cg/
 # macOS commandline build artifacts (Makefile metal/dylib rules)
 default.metallib
 gfx/common/metal/Shaders.air
+# `make bundle` output at the repo root. Daily-use copy lives in
+# local-builds/ (see .git/info/exclude), not in git.
+/RetroArch.app/
+
+# Python
+__pycache__/
+
+# Local Superpowers design/plan docs — not part of the fork
+docs/superpowers/
