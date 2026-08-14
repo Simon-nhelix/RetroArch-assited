@@ -420,6 +420,9 @@ ifneq ($(findstring Darwin,$(OS)),)
 # #define out via shell instead.
 PACKAGE_VERSION    := $(shell grep 'define PACKAGE_VERSION' version.all | cut -d'"' -f2)
 
+# `-` = ad-hoc. Override in Makefile.local with a keychain identity
+# so TCC permissions stick across rebuilds.
+CODESIGN_IDENTITY  ?= -
 BUNDLE             ?= RetroArch.app
 BUNDLE_EXECUTABLE  ?= RetroArch
 BUNDLE_IDENTIFIER  ?= com.libretro.dist.RetroArch
@@ -481,13 +484,17 @@ bundle: $(TARGET) $(METALLIB) $(RARCH_LINK_DEPS)
 		-e 's|$$(CURRENT_PROJECT_VERSION)|$(BUNDLE_BUILD)|g' \
 		-e 's|$$(MACOSX_DEPLOYMENT_TARGET)|$(BUNDLE_MIN_OS)|g' \
 		$(INFO_PLIST_SRC) > $(BUNDLE)/Contents/Info.plist
-	@# Ad-hoc code signing. On Apple Silicon (and increasingly on Intel
-	@# with hardened runtime enforcement), dyld refuses to load unsigned
-	@# dylibs even for ad-hoc app-internal use — including the MoltenVK
-	@# framework copied in above. `codesign --sign -` produces an ad-hoc
-	@# signature that satisfies the loader without needing a developer
-	@# identity. Sign nested content first (frameworks), then the outer
-	@# .app wrapper, so the app's seal covers all contents.
+	@# Code signing. On Apple Silicon (and increasingly on Intel with
+	@# hardened runtime enforcement), dyld refuses to load unsigned
+	@# dylibs even for app-internal use — including the MoltenVK
+	@# framework copied in above. Sign nested content first, then the
+	@# outer .app, so the app's seal covers all contents.
+	@#
+	@# Default identity is ad-hoc (`-`). That satisfies the loader but
+	@# the designated requirement is a CDHash, which changes every
+	@# rebuild, so macOS TCC re-prompts for mic/camera/network. Set
+	@# CODESIGN_IDENTITY in Makefile.local to a stable keychain
+	@# identity so grants survive rebuilds.
 	@#
 	@# Skip entirely on pre-Mavericks targets: those toolchains predate
 	@# `--timestamp`, the dyld enforcement that makes this necessary, and
@@ -496,10 +503,10 @@ bundle: $(TARGET) $(METALLIB) $(RARCH_LINK_DEPS)
 		if [ -d $(BUNDLE)/Contents/Frameworks ]; then \
 			for nested in $(BUNDLE)/Contents/Frameworks/*.framework \
 					$(BUNDLE)/Contents/Frameworks/*.dylib; do \
-				[ -e "$$nested" ] && codesign --force --sign - --timestamp=none "$$nested"; \
+				[ -e "$$nested" ] && codesign --force --sign "$(CODESIGN_IDENTITY)" --timestamp=none "$$nested"; \
 			done; \
 		fi; \
-		codesign --force --sign - --timestamp=none $(BUNDLE); \
+		codesign --force --sign "$(CODESIGN_IDENTITY)" --timestamp=none $(BUNDLE); \
 	fi
 	@echo "Done. Run with: open $(BUNDLE)"
 
